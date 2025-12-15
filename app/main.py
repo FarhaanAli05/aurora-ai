@@ -8,18 +8,15 @@ from fastapi.responses import HTMLResponse
 
 from src import inference as aurora_inference
 
-
 app = FastAPI(
     title="Aurora AI",
     description="Background removal and background replacement using InSPyReNet.",
     version="0.1.0",
 )
 
-
 @app.on_event("startup")
 async def load_model_on_startup() -> None:
     aurora_inference.get_model(None)
-
 
 HTML_FORM = """
 <!DOCTYPE html>
@@ -75,47 +72,47 @@ async def process_image(
     background: UploadFile | None = File(None),
     no_postprocess: bool = Form(False),
 ):
-    project_root = Path(__file__).resolve().parents[1]
-    tmp_dir = project_root / "tmp"
-    tmp_dir.mkdir(parents=True, exist_ok=True)
+    try:
+        project_root = Path(__file__).resolve().parents[1]
+        tmp_dir = project_root / "tmp"
+        tmp_dir.mkdir(parents=True, exist_ok=True)
 
-    suffix = os.path.splitext(image.filename or "")[1] or ".png"
-    with NamedTemporaryFile(dir=tmp_dir, suffix=suffix, delete=False) as in_file:
-        in_path = Path(in_file.name)
-        contents = await image.read()
-        in_file.write(contents)
+        suffix = os.path.splitext(image.filename or "")[1] or ".png"
+        with NamedTemporaryFile(dir=tmp_dir, suffix=suffix, delete=False) as in_file:
+            in_path = Path(in_file.name)
+            contents = await image.read()
+            in_file.write(contents)
 
-    bg_path: Path | None = None
-    if background is not None:
-        bg_contents = await background.read()
-        if bg_contents:
-            bg_suffix = os.path.splitext(background.filename or "")[1] or ".png"
-            with NamedTemporaryFile(dir=tmp_dir, suffix=bg_suffix, delete=False) as bg_file:
-                bg_path = Path(bg_file.name)
-                bg_file.write(bg_contents)
+        bg_path: Path | None = None
+        if background is not None:
+            bg_contents = await background.read()
+            if bg_contents:
+                bg_suffix = os.path.splitext(background.filename or "")[1] or ".png"
+                with NamedTemporaryFile(dir=tmp_dir, suffix=bg_suffix, delete=False) as bg_file:
+                    bg_path = Path(bg_file.name)
+                    bg_file.write(bg_contents)
 
-    with NamedTemporaryFile(dir=tmp_dir, suffix=".png", delete=False) as out_file:
-        out_path = Path(out_file.name)
+        with NamedTemporaryFile(dir=tmp_dir, suffix=".png", delete=False) as out_file:
+            out_path = Path(out_file.name)
 
-    aurora_inference.remove_background(
-        input_path=str(in_path),
-        output_path=str(out_path),
-        model_path=None,
-        background_path=str(bg_path) if bg_path is not None else None,
-        no_postprocess=no_postprocess,
-    )
+        aurora_inference.remove_background(
+            input_path=str(in_path),
+            output_path=str(out_path),
+            model_path=None,
+            background_path=str(bg_path) if bg_path is not None else None,
+            no_postprocess=no_postprocess,
+        )
 
-    with out_path.open("rb") as f:
-        image_bytes = f.read()
+        with out_path.open("rb") as f:
+            image_bytes = f.read()
 
-    base_name = os.path.splitext(image.filename or "output")[0]
-    out_filename = f"{base_name}_aurora.png"
+        base_name = os.path.splitext(image.filename or "output")[0]
+        out_filename = f"{base_name}_aurora.png"
 
-    # Encode to base64 so we can embed and download from the same data URL
-    b64_image = base64.b64encode(image_bytes).decode("ascii")
-    data_url = f"data:image/png;base64,{b64_image}"
+        b64_image = base64.b64encode(image_bytes).decode("ascii")
+        data_url = f"data:image/png;base64,{b64_image}"
 
-    result_html = f"""
+        result_html = f"""
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -141,5 +138,31 @@ async def process_image(
 </body>
 </html>
 """
+        return HTMLResponse(content=result_html)
 
-    return HTMLResponse(content=result_html)
+    except Exception:
+        error_html = """
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Aurora AI - Error</title>
+  <style>
+    body { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; margin: 2rem; }
+    .card { max-width: 480px; padding: 1.5rem; border-radius: 6px; border: 1px solid #fecaca; background: #fef2f2; }
+    h1 { margin-top: 0; color: #b91c1c; }
+    p { margin: 0.5rem 0; }
+    .btn { display: inline-block; margin-top: 1rem; padding: 0.5rem 1rem; border-radius: 4px; border: none; background: #2563eb; color: white; text-decoration: none; }
+    .btn:hover { background: #1d4ed8; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Processing error</h1>
+    <p>Failed to process image. Please try a different file or adjust your settings.</p>
+    <a class="btn" href="/">Back to form</a>
+  </div>
+</body>
+</html>
+"""
+        return HTMLResponse(content=error_html, status_code=400)
