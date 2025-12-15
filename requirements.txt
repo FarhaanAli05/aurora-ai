@@ -10,4 +10,6 @@ kornia
 pyyaml
 pandas
 scipy
+fastapi
+uvicorn
 
