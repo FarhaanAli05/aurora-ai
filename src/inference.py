@@ -1,5 +1,6 @@
 import sys
 import os
+import argparse
 from pathlib import Path
 import torch
 import numpy as np
@@ -12,6 +13,8 @@ inspyrenet_path = os.path.join(project_root, 'third_party', 'InSPyReNet')
 src_path = os.path.dirname(os.path.abspath(__file__))
 if src_path not in sys.path:
     sys.path.insert(0, src_path)
+
+from aurora_utils import postprocess_mask, replace_background
 
 if not os.path.exists(inspyrenet_path):
     print(f"Error: InSPYReNet repository not found at: {inspyrenet_path}")
@@ -35,6 +38,8 @@ def remove_background(
     input_path: str, 
     output_path: str, 
     model_path: str = None,
+    background_path: str = None,
+    no_postprocess: bool = False
 ) -> None:
     if model_path is None:
         model_path = os.path.join(project_root, 'models', 'latest.pth')
@@ -80,33 +85,62 @@ def remove_background(
     
     mask_array = np.array(mask_pil) / 255.0
     
+    if not no_postprocess:
+        print("Applying mask post-processing...")
+        mask_array = postprocess_mask(mask_array, threshold=0.5, smooth_edges=True)
+    
     alpha = (mask_array * 255).astype('uint8')
     
     image.putalpha(Image.fromarray(alpha, mode='L'))
     
-    Path(output_path).parent.mkdir(parents=True, exist_ok=True)
-    image.save(output_path, format='PNG')
-    print(f"✓ Saved transparent image to: {output_path}")
+    if background_path:
+        if not os.path.exists(background_path):
+            print(f"Error: Background image not found: {background_path}")
+            sys.exit(1)
+        print(f"Compositing with background: {background_path}")
+        image = replace_background(image, background_path)
+        Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+        image.save(output_path, format='PNG')
+        print(f"✓ Saved composite image to: {output_path}")
+    else:
+        Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+        image.save(output_path, format='PNG')
+        print(f"✓ Saved transparent image to: {output_path}")
 
 def main():
-    if len(sys.argv) < 3:
-        print("Usage: python src/inference.py <input_image> <output_image> [model_path]")
-        print("\nExample:")
-        print("  python src/inference.py data/input/photo.jpg data/output/photo.png")
-        sys.exit(1)
+    parser = argparse.ArgumentParser(
+        description='Aurora AI - Background Removal using InSPYReNet',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  python src/inference.py data/input/photo.jpg data/output/photo.png
+  python src/inference.py data/input/photo.jpg data/output/photo.png --background bg.jpg
+  python src/inference.py data/input/photo.jpg data/output/photo.png --no-postprocess
+  python src/inference.py data/input/photo.jpg data/output/photo.png --model models/custom.pth
+        """
+    )
     
-    input_path = sys.argv[1]
-    output_path = sys.argv[2]
-    model_path = sys.argv[3] if len(sys.argv) > 3 else None
+    parser.add_argument('input', help='Path to input image')
+    parser.add_argument('output', help='Path to output image')
+    parser.add_argument('--model', '-m', default=None, 
+                       help='Path to model weights (default: models/latest.pth)')
+    parser.add_argument('--background', '-b', default=None,
+                       help='Path to background image for replacement')
+    parser.add_argument('--no-postprocess', action='store_true',
+                       help='Skip mask post-processing (thresholding + edge smoothing)')
     
-    if not os.path.exists(input_path):
-        print(f"Error: Input file not found: {input_path}")
+    args = parser.parse_args()
+    
+    if not os.path.exists(args.input):
+        print(f"Error: Input file not found: {args.input}")
         sys.exit(1)
     
     remove_background(
-        input_path, 
-        output_path, 
-        model_path
+        args.input, 
+        args.output, 
+        model_path=args.model,
+        background_path=args.background,
+        no_postprocess=args.no_postprocess
     )
 
 if __name__ == "__main__":
