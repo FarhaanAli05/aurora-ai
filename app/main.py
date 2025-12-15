@@ -1,12 +1,13 @@
 import os
-from io import BytesIO
+import base64
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 
 from fastapi import FastAPI, File, UploadFile, Form
-from fastapi.responses import HTMLResponse, StreamingResponse
+from fastapi.responses import HTMLResponse
 
 from src import inference as aurora_inference
+
 
 app = FastAPI(
     title="Aurora AI",
@@ -14,9 +15,11 @@ app = FastAPI(
     version="0.1.0",
 )
 
+
 @app.on_event("startup")
 async def load_model_on_startup() -> None:
     aurora_inference.get_model(None)
+
 
 HTML_FORM = """
 <!DOCTYPE html>
@@ -31,11 +34,18 @@ HTML_FORM = """
     input[type="file"] { padding: 0.25rem 0; }
     button { padding: 0.5rem 1rem; border-radius: 4px; border: none; background: #2563eb; color: white; cursor: pointer; }
     button:hover { background: #1d4ed8; }
+    #status { margin-top: 0.5rem; color: #555; font-size: 0.9rem; display: none; }
   </style>
+  <script>
+    function onSubmitForm() {
+      const status = document.getElementById('status');
+      if (status) status.style.display = 'block';
+    }
+  </script>
 </head>
 <body>
   <h1>Aurora AI - Background Removal</h1>
-  <form action="/process" method="post" enctype="multipart/form-data">
+  <form action="/process" method="post" enctype="multipart/form-data" onsubmit="onSubmitForm()">
     <label>Main image (required)</label>
     <input type="file" name="image" accept="image/*" required />
 
@@ -48,8 +58,9 @@ HTML_FORM = """
     </label>
 
     <button type="submit">Process</button>
+    <div id="status">Processing… please wait.</div>
   </form>
-  <p>Response will be a PNG image download.</p>
+  <p>The processed PNG will be shown inline with a download link.</p>
 </body>
 </html>
 """
@@ -100,8 +111,35 @@ async def process_image(
     base_name = os.path.splitext(image.filename or "output")[0]
     out_filename = f"{base_name}_aurora.png"
 
-    return StreamingResponse(
-        BytesIO(image_bytes),
-        media_type="image/png",
-        headers={"Content-Disposition": f'inline; filename="{out_filename}"'},
-    )
+    # Encode to base64 so we can embed and download from the same data URL
+    b64_image = base64.b64encode(image_bytes).decode("ascii")
+    data_url = f"data:image/png;base64,{b64_image}"
+
+    result_html = f"""
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Aurora AI - Result</title>
+  <style>
+    body {{ font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; margin: 2rem; }}
+    .actions {{ margin-bottom: 1rem; display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; }}
+    .btn {{ padding: 0.5rem 1rem; border-radius: 4px; border: none; background: #2563eb; color: white; cursor: pointer; text-decoration: none; }}
+    .btn:hover {{ background: #1d4ed8; }}
+    img {{ max-width: 100%; height: auto; border-radius: 4px; border: 1px solid #e5e7eb; }}
+  </style>
+</head>
+<body>
+  <h1>Aurora AI - Result</h1>
+  <div class="actions">
+    <a class="btn" href="/"">Process another image</a>
+    <a class="btn" href="{data_url}" download="{out_filename}">Download PNG</a>
+  </div>
+  <div>
+    <img src="{data_url}" alt="Processed result" />
+  </div>
+</body>
+</html>
+"""
+
+    return HTMLResponse(content=result_html)
