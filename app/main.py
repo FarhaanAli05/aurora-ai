@@ -49,11 +49,6 @@ HTML_FORM = """
     <label>Background image (optional)</label>
     <input type="file" name="background" accept="image/*" />
 
-    <label>
-      <input type="checkbox" name="no_postprocess" />
-      Skip mask post-processing (thresholding + smoothing)
-    </label>
-
     <button type="submit">Process</button>
     <div id="status">Processing… please wait.</div>
   </form>
@@ -70,7 +65,6 @@ async def index() -> HTMLResponse:
 async def process_image(
     image: UploadFile = File(...),
     background: UploadFile | None = File(None),
-    no_postprocess: bool = Form(False),
 ):
     try:
         project_root = Path(__file__).resolve().parents[1]
@@ -100,7 +94,6 @@ async def process_image(
             output_path=str(out_path),
             model_path=None,
             background_path=str(bg_path) if bg_path is not None else None,
-            no_postprocess=no_postprocess,
         )
 
         with out_path.open("rb") as f:
