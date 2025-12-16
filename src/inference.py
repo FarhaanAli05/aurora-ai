@@ -24,15 +24,6 @@ _TRANSFORM = transforms.Compose(
 )
 
 def get_model(model_path: str | None = None):
-    """
-    Load BiRefNet model from Hugging Face (matching not-lain's implementation).
-    
-    The model is loaded once and cached globally for reuse across requests.
-    Model path parameter is ignored (BiRefNet uses Hugging Face model hub).
-    
-    Returns:
-        tuple: (model, device, transform) for use in inference
-    """
     global _MODEL
     
     if _MODEL is not None:
@@ -57,22 +48,7 @@ def remove_background(
     output_path: str,
     model_path: str | None = None,
     background_path: str | None = None,
-    no_postprocess: bool = False,
 ) -> None:
-    """
-    Remove background from an image using BiRefNet (matching not-lain's implementation).
-    
-    This function maintains the same signature as before for API compatibility.
-    The model_path parameter is ignored (BiRefNet uses Hugging Face model hub).
-    The no_postprocess parameter is ignored (BiRefNet doesn't use heuristic post-processing).
-    
-    Args:
-        input_path: Path to input RGB image
-        output_path: Path to save output PNG (RGBA if no background, RGB if background provided)
-        model_path: Ignored (kept for API compatibility)
-        background_path: Optional path to background image for compositing
-        no_postprocess: Ignored (kept for API compatibility, BiRefNet preserves soft edges)
-    """
     model, device, transform = get_model(model_path)
     
     print(f"Loading image: {input_path}")
@@ -115,7 +91,6 @@ def main():
 Examples:
   python src/inference.py data/input/photo.jpg data/output/photo.png
   python src/inference.py data/input/photo.jpg data/output/photo.png --background bg.jpg
-  python src/inference.py data/input/photo.jpg data/output/photo.png --no-postprocess
   python src/inference.py data/input/photo.jpg data/output/photo.png --model (ignored, uses Hugging Face model)
         """
     )
@@ -123,11 +98,9 @@ Examples:
     parser.add_argument('input', help='Path to input image')
     parser.add_argument('output', help='Path to output image')
     parser.add_argument('--model', '-m', default=None, 
-                       help='Path to model weights (default: models/latest.pth)')
+                       help='Path to model weights (ignored, uses Hugging Face model)')
     parser.add_argument('--background', '-b', default=None,
                        help='Path to background image for replacement')
-    parser.add_argument('--no-postprocess', action='store_true',
-                       help='Skip mask post-processing (thresholding + edge smoothing)')
     
     args = parser.parse_args()
     
@@ -140,7 +113,6 @@ Examples:
         args.output, 
         model_path=args.model,
         background_path=args.background,
-        no_postprocess=args.no_postprocess
     )
 
 if __name__ == "__main__":
