@@ -9,6 +9,7 @@ env/
 venv/
 ENV/
 .venv/
+tmp/
 
 data/input/*
 data/output/*

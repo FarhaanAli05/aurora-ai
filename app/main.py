@@ -10,7 +10,7 @@ from src import inference as aurora_inference
 
 app = FastAPI(
     title="Aurora AI",
-    description="Background removal and background replacement using InSPyReNet.",
+    description="Background removal and background replacement using BiRefNet.",
     version="0.1.0",
 )
 
