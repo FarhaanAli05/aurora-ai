@@ -1,0 +1,66 @@
+name = "2xBHI_small_esrgan_pretrain"
+model_type = "image"
+scale = 2
+use_amp = false # 246,700
+bfloat16 = false # 246,700
+fast_matmul = false # 246,700
+#compile = true
+manual_seed = 1024
+
+[datasets.train]
+type = "paired"
+dataroot_gt = '/home/phips/Documents/Datasets/BHI_small/HR'
+dataroot_lq = '/home/phips/Documents/Datasets/BHI_small/x2'
+patch_size = 128  # from 64 to 128 at 246,700
+batch_size = 8  # from 8 to 8 at 246,700
+
+[datasets.val]
+name = "val"
+type = "paired"
+dataroot_gt = '/home/phips/Documents/Datasets/wip/BHI_val_100/100/HR'
+dataroot_lq = '/home/phips/Documents/Datasets/wip/BHI_val_100/100/x2'
+[val]
+val_freq = 10000
+#tile = 200
+[val.metrics.psnr]
+type = "calculate_psnr"
+[val.metrics.ssim]
+type = "calculate_ssim"
+[val.metrics.dists]
+type = "calculate_dists"
+better = "lower"
+
+[path]
+#pretrain_network_g = 'experiments\pretrain_g.pth'
+#pretrain_network_d = 'experiments\pretrain_d.pth'
+
+[network_g]
+type = "esrgan"
+
+[train]
+ema = 0.999
+
+[train.optim_g]
+type = "adan_sf"
+lr = 8e-4
+betas = [ 0.98, 0.92, 0.99 ]
+weight_decay = 0.01
+schedule_free = true
+warmup_steps = 1600
+
+#  losses
+[train.pixel_opt]
+type = "L1Loss"
+loss_weight = 0.6
+reduction = "mean"
+
+[train.mssim_opt]
+type = "mssim_loss"
+loss_weight = 0.4
+
+[logger]
+total_iter = 1000000
+save_checkpoint_freq = 10000
+use_tb_logger = true
+#save_tb_img = true
+#print_freq = 100
