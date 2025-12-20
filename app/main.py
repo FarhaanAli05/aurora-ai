@@ -10,7 +10,7 @@ from src import inference as aurora_inference
 
 app = FastAPI(
     title="Aurora AI",
-    description="Background removal and background replacement using BiRefNet.",
+    description="Image Enhancement Studio - Background removal and AI upscaling.",
     version="0.1.0",
 )
 
@@ -23,36 +23,104 @@ HTML_FORM = """
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Aurora AI - Background Removal</title>
+  <title>Aurora AI - Image Enhancement Studio</title>
   <style>
     body { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; margin: 2rem; }
-    form { display: flex; flex-direction: column; gap: 0.75rem; max-width: 400px; }
+    form { display: flex; flex-direction: column; gap: 1rem; max-width: 480px; }
+    .form-group { display: flex; flex-direction: column; gap: 0.5rem; }
     label { font-weight: 600; }
+    .helper { font-size: 0.875rem; color: #6b7280; margin-top: -0.25rem; }
     input[type="file"] { padding: 0.25rem 0; }
-    button { padding: 0.5rem 1rem; border-radius: 4px; border: none; background: #2563eb; color: white; cursor: pointer; }
+    .radio-group { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.25rem; }
+    .radio-option { display: flex; align-items: flex-start; gap: 0.5rem; }
+    .radio-option input[type="radio"] { margin-top: 0.125rem; }
+    .radio-label { font-weight: normal; }
+    .radio-desc { font-size: 0.875rem; color: #6b7280; margin-left: 1.5rem; }
+    button { padding: 0.5rem 1rem; border-radius: 4px; border: none; background: #2563eb; color: white; cursor: pointer; font-weight: 600; }
     button:hover { background: #1d4ed8; }
     #status { margin-top: 0.5rem; color: #555; font-size: 0.9rem; display: none; }
+    #background-group { display: none; }
   </style>
   <script>
     function onSubmitForm() {
       const status = document.getElementById('status');
       if (status) status.style.display = 'block';
     }
+    function toggleBackgroundInput() {
+      const mode = document.querySelector('input[name="mode"]:checked')?.value;
+      const bgGroup = document.getElementById('background-group');
+      if (mode === 'remove_background' || mode === 'advanced_2x' || mode === 'advanced_4x') {
+        bgGroup.style.display = 'flex';
+      } else {
+        bgGroup.style.display = 'none';
+      }
+    }
+    document.addEventListener('DOMContentLoaded', function() {
+      document.querySelectorAll('input[name="mode"]').forEach(radio => {
+        radio.addEventListener('change', toggleBackgroundInput);
+      });
+      toggleBackgroundInput();
+    });
   </script>
 </head>
 <body>
-  <h1>Aurora AI - Background Removal</h1>
+  <h1>Aurora AI - Image Enhancement Studio</h1>
   <form action="/process" method="post" enctype="multipart/form-data" onsubmit="onSubmitForm()">
-    <label>Main image (required)</label>
-    <input type="file" name="image" accept="image/*" required />
+    <div class="form-group">
+      <label>Image (required)</label>
+      <input type="file" name="image" accept="image/*" required />
+    </div>
 
-    <label>Background image (optional)</label>
-    <input type="file" name="background" accept="image/*" />
+    <div class="form-group">
+      <label>Enhancement Mode</label>
+      <div class="radio-group">
+        <div class="radio-option">
+          <input type="radio" name="mode" value="remove_background" id="mode-remove" checked />
+          <div>
+            <label for="mode-remove" class="radio-label">Background Removal</label>
+            <div class="radio-desc">Remove background, returns transparent PNG</div>
+          </div>
+        </div>
+        <div class="radio-option">
+          <input type="radio" name="mode" value="enhance_2x" id="mode-enhance-2x" />
+          <div>
+            <label for="mode-enhance-2x" class="radio-label">Image Enhancement - Balanced (2×)</label>
+            <div class="radio-desc">Fast, low-artifact upscaling</div>
+          </div>
+        </div>
+        <div class="radio-option">
+          <input type="radio" name="mode" value="enhance_4x" id="mode-enhance-4x" />
+          <div>
+            <label for="mode-enhance-4x" class="radio-label">Image Enhancement - Strong (4×)</label>
+            <div class="radio-desc">High-detail upscaling</div>
+          </div>
+        </div>
+        <div class="radio-option">
+          <input type="radio" name="mode" value="advanced_2x" id="mode-advanced-2x" />
+          <div>
+            <label for="mode-advanced-2x" class="radio-label">Advanced - Balanced (2×)</label>
+            <div class="radio-desc">Remove background, then enhance (2×)</div>
+          </div>
+        </div>
+        <div class="radio-option">
+          <input type="radio" name="mode" value="advanced_4x" id="mode-advanced-4x" />
+          <div>
+            <label for="mode-advanced-4x" class="radio-label">Advanced - Strong (4×)</label>
+            <div class="radio-desc">Remove background, then enhance (4×)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group" id="background-group">
+      <label>Background image (optional)</label>
+      <input type="file" name="background" accept="image/*" />
+      <div class="helper">Replace removed background with this image</div>
+    </div>
 
     <button type="submit">Process</button>
     <div id="status">Processing… please wait.</div>
   </form>
-  <p>The processed PNG will be shown inline with a download link.</p>
 </body>
 </html>
 """
@@ -64,6 +132,7 @@ async def index() -> HTMLResponse:
 @app.post("/process")
 async def process_image(
     image: UploadFile = File(...),
+    mode: str = Form("remove_background"),
     background: UploadFile | None = File(None),
 ):
     try:
@@ -89,10 +158,10 @@ async def process_image(
         with NamedTemporaryFile(dir=tmp_dir, suffix=".png", delete=False) as out_file:
             out_path = Path(out_file.name)
 
-        aurora_inference.remove_background(
+        aurora_inference.process_image(
             input_path=str(in_path),
             output_path=str(out_path),
-            model_path=None,
+            mode=mode,
             background_path=str(bg_path) if bg_path is not None else None,
         )
 
@@ -133,7 +202,7 @@ async def process_image(
 """
         return HTMLResponse(content=result_html)
 
-    except Exception:
+    except Exception as e:
         error_html = """
 <!DOCTYPE html>
 <html lang="en">

@@ -16,9 +16,11 @@ data/output/*
 !data/input/.gitkeep
 !data/output/.gitkeep
 
-models/*.pth
-models/*.pth.tar
-models/*.ckpt
+models/**/*.pth
+models/**/*.safetensors
+models/**/*.bin
+models/**/*.ckpt
+models/**/*.onnx
 
 third_party/InSPyReNet/
 
