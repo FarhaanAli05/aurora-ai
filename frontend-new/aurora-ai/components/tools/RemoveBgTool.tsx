@@ -37,7 +37,7 @@ export default function RemoveBgTool({
 
       <div className="card p-6 space-y-6">
         <div>
-          <p className="text-sm text-gray-600 leading-relaxed">
+          <p className="text-sm text-[#9ca3af] leading-relaxed">
             Remove the background from your image instantly. The result will be
             a transparent PNG perfect for compositing.
           </p>
@@ -52,9 +52,9 @@ export default function RemoveBgTool({
         </button>
 
         {isProcessing && (
-          <div className="flex flex-col items-center gap-3 p-6 bg-gray-50 rounded-lg">
-            <div className="w-8 h-8 border-2 border-gray-300 border-t-primary-600 rounded-full animate-spin" />
-            <p className="text-sm text-gray-600">Processing your image...</p>
+          <div className="flex flex-col items-center gap-3 p-6 bg-[#181b23] rounded-lg border border-[#2d3239]">
+            <div className="w-8 h-8 border-2 border-[#2d3239] border-t-primary-600 rounded-full animate-spin" />
+            <p className="text-sm text-[#9ca3af]">Processing your image...</p>
           </div>
         )}
       </div>

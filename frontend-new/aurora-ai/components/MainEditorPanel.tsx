@@ -80,9 +80,9 @@ export default function MainEditorPanel({
   }
 
   return (
-    <main className="flex-1 flex flex-col overflow-hidden bg-gray-50">
-      <header className="bg-white border-b border-gray-200 px-6 py-4">
-        <h1 className="text-xl font-semibold text-gray-900">
+    <main className="flex-1 flex flex-col overflow-hidden bg-[#0f1115]">
+      <header className="bg-[#181b23] border-b border-[#2d3239] px-6 py-4">
+        <h1 className="text-xl font-semibold text-[#e5e7eb]">
           {selectedTool
             ? selectedTool
                 .split('-')
@@ -96,10 +96,10 @@ export default function MainEditorPanel({
           {renderToolContent()}
           {processedImage && (
             <div className="mt-6 card p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              <h3 className="text-lg font-semibold text-[#e5e7eb] mb-4">
                 Result
               </h3>
-              <div className="rounded-lg overflow-hidden border border-gray-200 mb-4">
+              <div className="rounded-lg overflow-hidden border border-[#2d3239] mb-4">
                 <img
                   src={processedImage}
                   alt="Processed result"

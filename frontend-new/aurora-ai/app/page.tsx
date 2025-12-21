@@ -51,7 +51,7 @@ export default function Home() {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex h-screen overflow-hidden bg-[#0f1115]">
       <ToolPalette
         tools={TOOLS}
         selectedTool={selectedTool}

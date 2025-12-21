@@ -32,12 +32,12 @@ export default function GenerateBgTool({
 
   return (
     <div className="space-y-6">
-      <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+      <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-lg">
         <div className="flex items-start gap-3">
-          <span className="text-amber-600 font-semibold text-xs uppercase tracking-wide">
+          <span className="text-amber-400 font-semibold text-xs uppercase tracking-wide">
             Experimental
           </span>
-          <p className="text-sm text-amber-800 flex-1">
+          <p className="text-sm text-[#9ca3af] flex-1">
             This feature uses AI to generate backgrounds. Results may vary and
             generation can take 30-60 seconds.
           </p>
@@ -47,60 +47,60 @@ export default function GenerateBgTool({
       <div>
         <label
           htmlFor="bg-prompt"
-          className="block text-sm font-semibold text-gray-900 mb-2"
+          className="block text-sm font-semibold text-[#e5e7eb] mb-2"
         >
           Describe Your Background
         </label>
         <textarea
           id="bg-prompt"
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-none"
+          className="w-full px-4 py-3 bg-[#181b23] border border-[#2d3239] rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-none text-[#e5e7eb] placeholder:text-[#6b7280]"
           placeholder="e.g., sunset over mountains, abstract blue gradient, modern office space"
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
           rows={3}
         />
-        <p className="text-xs text-gray-500 mt-2">
+        <p className="text-xs text-[#6b7280] mt-2">
           Be specific for better results. Describe colors, mood, and style.
         </p>
       </div>
 
       <div>
-        <label className="block text-sm font-semibold text-gray-900 mb-3">
+        <label className="block text-sm font-semibold text-[#e5e7eb] mb-3">
           Generation Quality
         </label>
         <div className="space-y-3">
-          <label className="flex items-start gap-3 p-4 border border-gray-200 rounded-lg cursor-pointer hover:border-primary-300 hover:bg-gray-50 transition-colors">
+          <label className="flex items-start gap-3 p-4 border border-[#2d3239] rounded-lg cursor-pointer hover:border-primary-500/50 hover:bg-[#252932] transition-colors">
             <input
               type="radio"
               name="gen_quality"
               value="fast"
               checked={quality === 'fast'}
               onChange={(e) => setQuality(e.target.value as 'fast' | 'hq')}
-              className="mt-1"
+              className="mt-1 accent-primary-600"
             />
             <div className="flex-1">
-              <div className="font-medium text-gray-900">
+              <div className="font-medium text-[#e5e7eb]">
                 Fast (Recommended)
               </div>
-              <div className="text-sm text-gray-600 mt-1">
+              <div className="text-sm text-[#9ca3af] mt-1">
                 Quick generation with good quality
               </div>
             </div>
           </label>
-          <label className="flex items-start gap-3 p-4 border border-gray-200 rounded-lg cursor-pointer hover:border-primary-300 hover:bg-gray-50 transition-colors">
+          <label className="flex items-start gap-3 p-4 border border-[#2d3239] rounded-lg cursor-pointer hover:border-primary-500/50 hover:bg-[#252932] transition-colors">
             <input
               type="radio"
               name="gen_quality"
               value="hq"
               checked={quality === 'hq'}
               onChange={(e) => setQuality(e.target.value as 'fast' | 'hq')}
-              className="mt-1"
+              className="mt-1 accent-primary-600"
             />
             <div className="flex-1">
-              <div className="font-medium text-gray-900">
+              <div className="font-medium text-[#e5e7eb]">
                 High Quality (Slower)
               </div>
-              <div className="text-sm text-gray-600 mt-1">
+              <div className="text-sm text-[#9ca3af] mt-1">
                 Better detail, takes longer to generate
               </div>
             </div>
@@ -117,9 +117,9 @@ export default function GenerateBgTool({
       </button>
 
       {isProcessing && (
-          <div className="flex flex-col items-center gap-3 p-6 bg-gray-50 rounded-lg">
-            <div className="w-8 h-8 border-2 border-gray-300 border-t-primary-600 rounded-full animate-spin" />
-          <p className="text-sm text-gray-600">
+          <div className="flex flex-col items-center gap-3 p-6 bg-[#181b23] rounded-lg border border-[#2d3239]">
+            <div className="w-8 h-8 border-2 border-[#2d3239] border-t-primary-600 rounded-full animate-spin" />
+          <p className="text-sm text-[#9ca3af]">
             Generating your background... This may take 30-60 seconds.
           </p>
         </div>
