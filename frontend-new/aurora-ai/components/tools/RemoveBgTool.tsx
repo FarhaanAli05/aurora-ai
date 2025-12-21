@@ -1,5 +1,7 @@
 'use client'
 
+import { removeBackground } from '@/lib/api'
+
 interface RemoveBgToolProps {
   uploadedImage: string
   isProcessing: boolean
@@ -19,22 +21,28 @@ export default function RemoveBgTool({
 }: RemoveBgToolProps) {
   const handleProcess = async () => {
     onProcessingStart()
-    
-    // Simulate async processing with potential error
-    setTimeout(() => {
-      // Simulate 10% error rate for demo purposes
-      if (Math.random() < 0.1) {
-        onProcessingError(
-          new Error('Failed to remove background. The image may be too complex or low quality.')
-        )
-        return
+
+    try {
+      const response = await fetch(uploadedImage)
+      const blob = await response.blob()
+      const file = new File([blob], 'image.jpg', { type: blob.type || 'image/jpeg' })
+
+      const resultBlob = await removeBackground(file)
+
+      const objectUrl = URL.createObjectURL(resultBlob)
+
+      onBackgroundRemoved()
+
+      onProcessingComplete(objectUrl)
+    } catch (error) {
+      if (error instanceof Error) {
+        onProcessingError(error.message)
+      } else if (typeof error === 'string') {
+        onProcessingError(error)
+      } else {
+        onProcessingError('Failed to remove background. Please try again.')
       }
-      
-      setTimeout(() => {
-        onBackgroundRemoved()
-        onProcessingComplete(uploadedImage)
-      }, 2000)
-    }, 500)
+    }
   }
 
   return (

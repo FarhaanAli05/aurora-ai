@@ -22,9 +22,7 @@ export default function EnhanceTool({
   const handleProcess = async () => {
     onProcessingStart()
     
-    // Simulate async processing with potential error
     setTimeout(() => {
-      // Simulate 10% error rate for demo purposes
       if (Math.random() < 0.1) {
         onProcessingError(
           new Error('Failed to enhance image. Please try again or use a different image.')
@@ -32,7 +30,6 @@ export default function EnhanceTool({
         return
       }
       
-      // Simulate processing time based on quality
       const processingTime = quality === 'fast' ? 2000 : 4000
       setTimeout(() => {
         onProcessingComplete(uploadedImage)

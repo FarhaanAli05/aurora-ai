@@ -26,9 +26,7 @@ export default function GenerateBgTool({
 
     onProcessingStart()
     
-    // Simulate async processing with potential error
     setTimeout(() => {
-      // Simulate 15% error rate for AI generation (higher than other tools)
       if (Math.random() < 0.15) {
         onProcessingError(
           'Background generation failed. The GPU queue may be busy. Please try again in a moment.'
@@ -36,7 +34,6 @@ export default function GenerateBgTool({
         return
       }
       
-      // Simulate longer processing time for AI generation
       const processingTime = quality === 'fast' ? 3000 : 5000
       setTimeout(() => {
         onProcessingComplete('')

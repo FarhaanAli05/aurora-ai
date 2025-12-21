@@ -44,9 +44,7 @@ export default function ReplaceBgTool({
 
     onProcessingStart()
     
-    // Simulate async processing with potential error
     setTimeout(() => {
-      // Simulate 10% error rate for demo purposes
       if (Math.random() < 0.1) {
         onProcessingError(
           'Failed to replace background. Please try again with a different background image.'

@@ -14,6 +14,7 @@ interface MainEditorPanelProps {
   onImageUpload: (image: string) => void
   onBackgroundRemoved: () => void
   onError?: (message: string) => void
+  onSuccess?: (message: string) => void
 }
 
 export default function MainEditorPanel({
@@ -23,6 +24,7 @@ export default function MainEditorPanel({
   onImageUpload,
   onBackgroundRemoved,
   onError,
+  onSuccess,
 }: MainEditorPanelProps) {
   const [isProcessing, setIsProcessing] = useState(false)
   const [processedImage, setProcessedImage] = useState<string | null>(null)
@@ -35,6 +37,9 @@ export default function MainEditorPanel({
   const handleProcessingComplete = (result: string) => {
     setIsProcessing(false)
     setProcessedImage(result)
+    if (onSuccess && selectedTool === 'remove-bg') {
+      onSuccess('Background removed successfully!')
+    }
   }
 
   const handleProcessingError = (error: Error | string) => {
@@ -113,10 +118,19 @@ export default function MainEditorPanel({
                 />
               </div>
               <div className="flex gap-3">
-                <button className="btn btn-primary">Download</button>
+                <a
+                  href={processedImage}
+                  download="aurora-result.png"
+                  className="btn btn-primary"
+                >
+                  Download
+                </a>
                 <button
                   className="btn btn-secondary"
                   onClick={() => {
+                    if (processedImage.startsWith('blob:')) {
+                      URL.revokeObjectURL(processedImage)
+                    }
                     setProcessedImage(null)
                     setIsProcessing(false)
                   }}
