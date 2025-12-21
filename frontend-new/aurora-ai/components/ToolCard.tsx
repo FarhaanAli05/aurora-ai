@@ -29,7 +29,7 @@ export default function ToolCard({
           : 'hover:shadow-md hover:scale-[1.01]'
         }
         ${disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}
-        rounded-xl overflow-hidden bg-white
+        rounded-xl overflow-hidden bg-[#1f2330]
       `}
       type="button"
     >

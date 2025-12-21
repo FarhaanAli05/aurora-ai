@@ -60,13 +60,13 @@ export default function ReplaceBgTool({
         </div>
 
         <div className="card p-6">
-          <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-lg">
-            <span className="text-2xl">💡</span>
+          <div className="flex items-start gap-3 p-4 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+            <span className="text-2xl opacity-70">💡</span>
             <div>
-              <p className="font-medium text-amber-900 mb-1">
+              <p className="font-medium text-amber-400 mb-1">
                 Background removal required
               </p>
-              <p className="text-sm text-amber-800">
+              <p className="text-sm text-[#9ca3af]">
                 Please remove the background first, or upload an image with a
                 transparent background to use this tool.
               </p>
@@ -89,43 +89,43 @@ export default function ReplaceBgTool({
 
       <div className="card p-6 space-y-6">
         <div>
-          <label className="block text-sm font-semibold text-gray-900 mb-3">
+          <label className="block text-sm font-semibold text-[#e5e7eb] mb-3">
             Background Source
           </label>
           <div className="space-y-3">
-            <label className="flex items-start gap-3 p-4 border border-gray-200 rounded-lg cursor-pointer hover:border-primary-300 hover:bg-gray-50 transition-colors">
+            <label className="flex items-start gap-3 p-4 border border-[#2d3239] rounded-lg cursor-pointer hover:border-primary-500/50 hover:bg-[#252932] transition-colors">
               <input
                 type="radio"
                 name="bg_type"
                 value="upload"
                 checked={bgType === 'upload'}
                 onChange={(e) => setBgType(e.target.value as 'upload' | 'generate')}
-                className="mt-1"
+                className="mt-1 accent-primary-600"
               />
               <div className="flex-1">
-                <div className="font-medium text-gray-900">Upload Image</div>
-                <div className="text-sm text-gray-600 mt-1">
+                <div className="font-medium text-[#e5e7eb]">Upload Image</div>
+                <div className="text-sm text-[#9ca3af] mt-1">
                   Use your own background image
                 </div>
               </div>
             </label>
-            <label className="flex items-start gap-3 p-4 border border-gray-200 rounded-lg cursor-pointer hover:border-primary-300 hover:bg-gray-50 transition-colors">
+            <label className="flex items-start gap-3 p-4 border border-[#2d3239] rounded-lg cursor-pointer hover:border-primary-500/50 hover:bg-[#252932] transition-colors">
               <input
                 type="radio"
                 name="bg_type"
                 value="generate"
                 checked={bgType === 'generate'}
                 onChange={(e) => setBgType(e.target.value as 'upload' | 'generate')}
-                className="mt-1"
+                className="mt-1 accent-primary-600"
               />
               <div className="flex-1">
-                <div className="font-medium text-gray-900">
+                <div className="font-medium text-[#e5e7eb]">
                   Generate with AI
-                  <span className="ml-2 text-xs bg-amber-400 text-amber-900 px-2 py-0.5 rounded uppercase font-semibold">
+                  <span className="ml-2 text-xs bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded uppercase font-semibold border border-amber-500/30">
                     Experimental
                   </span>
                 </div>
-                <div className="text-sm text-gray-600 mt-1">
+                <div className="text-sm text-[#9ca3af] mt-1">
                   Create a background from a text prompt
                 </div>
               </div>
@@ -135,7 +135,7 @@ export default function ReplaceBgTool({
 
         {bgType === 'upload' && (
           <div>
-            <label className="block text-sm font-semibold text-gray-900 mb-3">
+            <label className="block text-sm font-semibold text-[#e5e7eb] mb-3">
               Background Image
             </label>
             <button
@@ -152,7 +152,7 @@ export default function ReplaceBgTool({
               className="hidden"
             />
             {bgImage && (
-              <div className="mt-3 rounded-lg overflow-hidden border border-gray-200 max-w-xs">
+              <div className="mt-3 rounded-lg overflow-hidden border border-[#2d3239] max-w-xs">
                 <img src={bgImage} alt="Background preview" className="w-full h-auto" />
               </div>
             )}
@@ -177,9 +177,9 @@ export default function ReplaceBgTool({
         </button>
 
         {isProcessing && (
-          <div className="flex flex-col items-center gap-3 p-6 bg-gray-50 rounded-lg">
-            <div className="w-8 h-8 border-2 border-gray-300 border-t-primary-600 rounded-full animate-spin" />
-            <p className="text-sm text-gray-600">Compositing your image...</p>
+          <div className="flex flex-col items-center gap-3 p-6 bg-[#181b23] rounded-lg border border-[#2d3239]">
+            <div className="w-8 h-8 border-2 border-[#2d3239] border-t-primary-600 rounded-full animate-spin" />
+            <p className="text-sm text-[#9ca3af]">Compositing your image...</p>
           </div>
         )}
       </div>

@@ -56,8 +56,8 @@ export default function ImageUpload({ onImageUpload }: ImageUploadProps) {
           transition-all duration-200
           ${
             dragActive
-              ? 'border-primary-500 bg-primary-50'
-              : 'border-gray-300 hover:border-primary-400 hover:bg-gray-50'
+              ? 'border-primary-500 bg-primary-500/10'
+              : 'border-[#2d3239] hover:border-primary-500/50 hover:bg-[#252932]'
           }
         `}
         onDragEnter={handleDrag}
@@ -66,14 +66,14 @@ export default function ImageUpload({ onImageUpload }: ImageUploadProps) {
         onDrop={handleDrop}
         onClick={() => fileInputRef.current?.click()}
       >
-        <div className="text-5xl mb-4">📷</div>
-        <h3 className="text-xl font-semibold text-gray-900 mb-2">
+        <div className="text-5xl mb-4 opacity-60">📷</div>
+        <h3 className="text-xl font-semibold text-[#e5e7eb] mb-2">
           Upload an image
         </h3>
-        <p className="text-gray-600 mb-1">
+        <p className="text-[#9ca3af] mb-1">
           Drag and drop an image here, or click to browse
         </p>
-        <p className="text-sm text-gray-500">Supports JPG, PNG, WEBP</p>
+        <p className="text-sm text-[#6b7280]">Supports JPG, PNG, WEBP</p>
         <input
           ref={fileInputRef}
           type="file"
