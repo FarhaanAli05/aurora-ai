@@ -1,57 +1,82 @@
-# Aurora AI - Background Removal
+# Aurora AI - Image Enhancement Studio
 
-Production-ready background removal using InSPYReNet.
+Aurora AI is a modern, full-stack AI image editing studio featuring background removal, image enhancement, and experimental AI-generated backgrounds. The project is designed with production-quality architecture and a Canva/Pixlr-inspired user experience.
 
-## Setup
+---
 
-1. Clone the InSPYReNet repository:
-```bash
-git clone https://github.com/plemeri/InSPyReNet.git third_party/InSPyReNet
-```
+## Features
 
-2. Install dependencies:
+- **Image Enhancement**
+  - AI-powered upscaling
+  - 2x (Fast) and 4x (High Quality) modes
+
+- **Background Removal**
+  - One-click background removal
+  - Produces transparent PNG outputs
+
+- **Background Replacement**
+  - Replace backgrounds using uploaded images
+  - Enabled only when a transparent image is available
+
+- **AI Background Generation (Experimental)**
+  - Prompt-based background generation using FLUX models
+  - Quality selector (Fast / High Quality)
+
+---
+
+## Architecture Overview
+
+Aurora AI follows a clean, production-ready separation between frontend UI and backend inference.
+
+### Frontend
+- **Next.js 16** (App Router)
+- **TypeScript**
+- **Tailwind CSS**
+- Pixlr/Canva-inspired UI
+- Progressive disclosure and tool dependency handling
+
+### Backend
+- **FastAPI** for REST endpoints
+- **PyTorch** for ML inference
+- **BiRefNet** for background removal
+- **ESRGAN / DAT2** for AI upscaling (2x / 4x)
+- **Hugging Face Diffusers** for FLUX-based background generation
+- Automatic device detection (CPU / GPU / ZeroGPU)
+
+---
+
+## Deployment
+
+- Designed for **Hugging Face Spaces**
+- Compatible with:
+  - CPU Spaces
+  - ZeroGPU Spaces
+- Graceful fallback when GPU is unavailable
+- No model weights committed to the repository
+
+---
+
+## Development
+
+### Backend
 ```bash
 pip install -r requirements.txt
+
+uvicorn app.main:app --reload
 ```
 
-3. Download pretrained weights:
-   - Visit the [InSPYReNet Model Zoo](https://github.com/plemeri/InSPyReNet#model-zoo)
-   - Download the checkpoint (e.g., `InSPyReNet_SwinB.pth`)
-   - Place it in `models/InSPyReNet_SwinB.pth`
-
-## Usage
-
+### Frontend
 ```bash
-python src/inference.py data/input/photo.jpg data/output/photo.png
+cd frontend-new/aurora-ai
+
+npm install
+
+npm run dev
 ```
 
-## Project Structure
+### Tech Stack
 
-```
-aurora-ai/
-├── data/
-│   ├── input/          # Input images
-│   └── output/         # Transparent PNG outputs
-├── models/             # Model weights (.pth files)
-├── third_party/
-│   └── InSPyReNet/     # Cloned InSPYReNet repository
-├── src/
-│   ├── __init__.py
-│   └── inference.py    # Main inference script
-├── requirements.txt
-└── README.md
-```
-
-## How It Works
-
-1. **Load Image**: Reads input image and converts to RGB
-2. **Preprocess**: Resizes to model input size (384x384) and normalizes
-3. **Inference**: InSPYReNet generates foreground probability mask (0-1 per pixel)
-4. **Post-process**: Converts mask to alpha channel
-5. **Composite**: Combines original RGB + alpha --> transparent PNG
-
-## References
-
-- InSPYReNet Repository: https://github.com/plemeri/InSPyReNet
-- Paper: Revisiting Image Pyramid Structure for High Resolution Salient Object Detection (ACCV 2022)
-
+- **Frontend**: Next.js, React, TypeScript, Tailwind CSS
+- **Backend**: FastAPI, PyTorch
+- **ML Models**: BiRefNet, ESRGAN, DAT2, FLUX
+- **Deployment**: Hugging Face Spaces

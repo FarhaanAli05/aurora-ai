@@ -22,10 +22,13 @@ The following files must be present in this directory:
 ---
 
 ## Where to Place
+
+```
 models/upscaling/2xBHI_small_drct-xl/
-  model.pth
-  model.toml
-  README.md
+├── model.pth
+├── model.toml
+└── README.md
+```
 
 ---
 
