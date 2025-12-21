@@ -1,8 +1,10 @@
 'use client'
 
 import { useState } from 'react'
+import { processImage } from '@/lib/api'
 
 interface GenerateBgToolProps {
+  uploadedImage: string
   isProcessing: boolean
   onProcessingStart: () => void
   onProcessingComplete: (result: string) => void
@@ -10,6 +12,7 @@ interface GenerateBgToolProps {
 }
 
 export default function GenerateBgTool({
+  uploadedImage,
   isProcessing,
   onProcessingStart,
   onProcessingComplete,
@@ -25,20 +28,32 @@ export default function GenerateBgTool({
     }
 
     onProcessingStart()
-    
-    setTimeout(() => {
-      if (Math.random() < 0.15) {
+
+    try {
+      const response = await fetch(uploadedImage)
+      const blob = await response.blob()
+      const file = new File([blob], 'image.jpg', { type: blob.type || 'image/jpeg' })
+
+      const resultBlob = await processImage(file, {
+        mode: 'remove_background',
+        bgType: 'generate',
+        bgPrompt: prompt.trim(),
+        bgQuality: quality,
+      })
+
+      const objectUrl = URL.createObjectURL(resultBlob)
+      onProcessingComplete(objectUrl)
+    } catch (error) {
+      if (error instanceof Error) {
+        onProcessingError(error.message)
+      } else if (typeof error === 'string') {
+        onProcessingError(error)
+      } else {
         onProcessingError(
           'Background generation failed. The GPU queue may be busy. Please try again in a moment.'
         )
-        return
       }
-      
-      const processingTime = quality === 'fast' ? 3000 : 5000
-      setTimeout(() => {
-        onProcessingComplete('')
-      }, processingTime)
-    }, 500)
+    }
   }
 
   return (

@@ -1,6 +1,6 @@
 'use client'
 
-import { removeBackground } from '@/lib/api'
+import { processImage } from '@/lib/api'
 
 interface RemoveBgToolProps {
   uploadedImage: string
@@ -27,7 +27,7 @@ export default function RemoveBgTool({
       const blob = await response.blob()
       const file = new File([blob], 'image.jpg', { type: blob.type || 'image/jpeg' })
 
-      const resultBlob = await removeBackground(file)
+      const resultBlob = await processImage(file, { mode: 'remove_background' })
 
       const objectUrl = URL.createObjectURL(resultBlob)
 

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { processImage } from '@/lib/api'
 
 interface EnhanceToolProps {
   uploadedImage: string
@@ -21,20 +22,27 @@ export default function EnhanceTool({
 
   const handleProcess = async () => {
     onProcessingStart()
-    
-    setTimeout(() => {
-      if (Math.random() < 0.1) {
-        onProcessingError(
-          new Error('Failed to enhance image. Please try again or use a different image.')
-        )
-        return
+
+    try {
+      const response = await fetch(uploadedImage)
+      const blob = await response.blob()
+      const file = new File([blob], 'image.jpg', { type: blob.type || 'image/jpeg' })
+
+      const scale = quality === 'fast' ? 2 : 4
+      const mode = scale === 2 ? 'enhance_2x' : 'enhance_4x'
+      const resultBlob = await processImage(file, { mode })
+
+      const objectUrl = URL.createObjectURL(resultBlob)
+      onProcessingComplete(objectUrl)
+    } catch (error) {
+      if (error instanceof Error) {
+        onProcessingError(error.message)
+      } else if (typeof error === 'string') {
+        onProcessingError(error)
+      } else {
+        onProcessingError('Failed to enhance image. Please try again or use a different image.')
       }
-      
-      const processingTime = quality === 'fast' ? 2000 : 4000
-      setTimeout(() => {
-        onProcessingComplete(uploadedImage)
-      }, processingTime)
-    }, 500)
+    }
   }
 
   return (
@@ -63,7 +71,7 @@ export default function EnhanceTool({
                 className="mt-1 accent-primary-600"
               />
               <div className="flex-1">
-                <div className="font-medium text-[#e5e7eb]">Fast (2×)</div>
+                <div className="font-medium text-[#e5e7eb]">Fast (2x)</div>
                 <div className="text-sm text-[#9ca3af] mt-1">
                   Quick enhancement with balanced quality
                 </div>
@@ -79,7 +87,7 @@ export default function EnhanceTool({
                 className="mt-1 accent-primary-600"
               />
               <div className="flex-1">
-                <div className="font-medium text-[#e5e7eb]">High Quality (4×)</div>
+                <div className="font-medium text-[#e5e7eb]">High Quality (4x)</div>
                 <div className="text-sm text-[#9ca3af] mt-1">
                   Maximum detail, takes longer to process
                 </div>
