@@ -11,6 +11,8 @@ ENV/
 .venv/
 tmp/
 
+frontend/
+
 data/input/*
 data/output/*
 !data/input/.gitkeep

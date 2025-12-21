@@ -20,9 +20,12 @@ BiRefNet provides strong edge accuracy and handles complex subjects such as hair
 ---
 
 ## Where to Place
+
+```
 models/bg_removal/birefnet/
-  latest.pth
-  README.md
+├── latest.pth
+└── README.md
+```
 
 ---
 

@@ -24,9 +24,12 @@ Other files (logs, training artifacts) are **not required**.
 ---
 
 ## Where to Place
+
+```
 models/upscaling/4xBHI_dat2_real/
-  4xBHI_dat2_real.safetensors
-  README.md
+├── 4xBHI_dat2_real.safetensors
+└── README.md
+```
 
 ---
 
