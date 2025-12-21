@@ -5,7 +5,7 @@ interface RemoveBgToolProps {
   isProcessing: boolean
   onProcessingStart: () => void
   onProcessingComplete: (result: string) => void
-  onProcessingError: (error: Error) => void
+  onProcessingError: (error: Error | string) => void
   onBackgroundRemoved: () => void
 }
 
@@ -19,10 +19,22 @@ export default function RemoveBgTool({
 }: RemoveBgToolProps) {
   const handleProcess = async () => {
     onProcessingStart()
+    
+    // Simulate async processing with potential error
     setTimeout(() => {
-      onBackgroundRemoved()
-      onProcessingComplete(uploadedImage)
-    }, 2000)
+      // Simulate 10% error rate for demo purposes
+      if (Math.random() < 0.1) {
+        onProcessingError(
+          new Error('Failed to remove background. The image may be too complex or low quality.')
+        )
+        return
+      }
+      
+      setTimeout(() => {
+        onBackgroundRemoved()
+        onProcessingComplete(uploadedImage)
+      }, 2000)
+    }, 500)
   }
 
   return (

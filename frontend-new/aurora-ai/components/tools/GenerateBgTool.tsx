@@ -6,7 +6,7 @@ interface GenerateBgToolProps {
   isProcessing: boolean
   onProcessingStart: () => void
   onProcessingComplete: (result: string) => void
-  onProcessingError: (error: Error) => void
+  onProcessingError: (error: Error | string) => void
 }
 
 export default function GenerateBgTool({
@@ -20,14 +20,28 @@ export default function GenerateBgTool({
 
   const handleGenerate = async () => {
     if (!prompt.trim()) {
-      alert('Please enter a prompt')
+      onProcessingError('Please enter a prompt to generate a background')
       return
     }
 
     onProcessingStart()
+    
+    // Simulate async processing with potential error
     setTimeout(() => {
-      onProcessingComplete('')
-    }, 3000)
+      // Simulate 15% error rate for AI generation (higher than other tools)
+      if (Math.random() < 0.15) {
+        onProcessingError(
+          'Background generation failed. The GPU queue may be busy. Please try again in a moment.'
+        )
+        return
+      }
+      
+      // Simulate longer processing time for AI generation
+      const processingTime = quality === 'fast' ? 3000 : 5000
+      setTimeout(() => {
+        onProcessingComplete('')
+      }, processingTime)
+    }, 500)
   }
 
   return (

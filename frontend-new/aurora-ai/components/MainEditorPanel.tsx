@@ -13,6 +13,7 @@ interface MainEditorPanelProps {
   hasTransparentBg: boolean
   onImageUpload: (image: string) => void
   onBackgroundRemoved: () => void
+  onError?: (message: string) => void
 }
 
 export default function MainEditorPanel({
@@ -21,6 +22,7 @@ export default function MainEditorPanel({
   hasTransparentBg,
   onImageUpload,
   onBackgroundRemoved,
+  onError,
 }: MainEditorPanelProps) {
   const [isProcessing, setIsProcessing] = useState(false)
   const [processedImage, setProcessedImage] = useState<string | null>(null)
@@ -35,9 +37,13 @@ export default function MainEditorPanel({
     setProcessedImage(result)
   }
 
-  const handleProcessingError = (error: Error) => {
+  const handleProcessingError = (error: Error | string) => {
     setIsProcessing(false)
-    console.error('Processing error:', error)
+    const errorMessage = typeof error === 'string' ? error : error.message
+    console.error('Processing error:', errorMessage)
+    if (onError) {
+      onError(errorMessage)
+    }
   }
 
   const renderToolContent = () => {

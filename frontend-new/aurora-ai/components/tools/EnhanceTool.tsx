@@ -7,7 +7,7 @@ interface EnhanceToolProps {
   isProcessing: boolean
   onProcessingStart: () => void
   onProcessingComplete: (result: string) => void
-  onProcessingError: (error: Error) => void
+  onProcessingError: (error: Error | string) => void
 }
 
 export default function EnhanceTool({
@@ -21,9 +21,23 @@ export default function EnhanceTool({
 
   const handleProcess = async () => {
     onProcessingStart()
+    
+    // Simulate async processing with potential error
     setTimeout(() => {
-      onProcessingComplete(uploadedImage)
-    }, 2000)
+      // Simulate 10% error rate for demo purposes
+      if (Math.random() < 0.1) {
+        onProcessingError(
+          new Error('Failed to enhance image. Please try again or use a different image.')
+        )
+        return
+      }
+      
+      // Simulate processing time based on quality
+      const processingTime = quality === 'fast' ? 2000 : 4000
+      setTimeout(() => {
+        onProcessingComplete(uploadedImage)
+      }, processingTime)
+    }, 500)
   }
 
   return (

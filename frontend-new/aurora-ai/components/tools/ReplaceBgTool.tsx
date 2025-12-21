@@ -9,7 +9,7 @@ interface ReplaceBgToolProps {
   isProcessing: boolean
   onProcessingStart: () => void
   onProcessingComplete: (result: string) => void
-  onProcessingError: (error: Error) => void
+  onProcessingError: (error: Error | string) => void
 }
 
 export default function ReplaceBgTool({
@@ -38,14 +38,26 @@ export default function ReplaceBgTool({
 
   const handleProcess = async () => {
     if (bgType === 'upload' && !bgImage) {
-      alert('Please upload a background image')
+      onProcessingError('Please upload a background image')
       return
     }
 
     onProcessingStart()
+    
+    // Simulate async processing with potential error
     setTimeout(() => {
-      onProcessingComplete(uploadedImage)
-    }, 2000)
+      // Simulate 10% error rate for demo purposes
+      if (Math.random() < 0.1) {
+        onProcessingError(
+          'Failed to replace background. Please try again with a different background image.'
+        )
+        return
+      }
+      
+      setTimeout(() => {
+        onProcessingComplete(uploadedImage)
+      }, 2500)
+    }, 500)
   }
 
   if (!hasTransparentBg) {
