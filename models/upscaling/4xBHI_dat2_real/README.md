@@ -16,7 +16,7 @@ This is the **highest-quality enhancement option**, intended for users who want 
 ## Required Files
 Only **one** of the following is required (preferred option listed first):
 
-- `4xBHI_dat2_real.safetensors` ✅ (recommended)
+- `4xBHI_dat2_real.safetensors` (recommended)
 - `4xBHI_dat2_real.pth` (legacy)
 
 Other files (logs, training artifacts) are **not required**.
@@ -25,11 +25,8 @@ Other files (logs, training artifacts) are **not required**.
 
 ## Where to Place
 models/upscaling/4xBHI_dat2_real/
-├── 4xBHI_dat2_real.safetensors
-└── README.md
-
-yaml
-Copy code
+  4xBHI_dat2_real.safetensors
+  README.md
 
 ---
 
@@ -49,12 +46,12 @@ Verify license terms before redistribution or commercial use.
 ---
 
 ## Runtime Notes
-- **CPU:** Very slow (1–2 minutes per image)
+- **CPU:** Very slow (1-2 minutes per image)
 - **GPU / ZeroGPU:** Fast (seconds)
 - **Memory Usage:** High
 - **Deterministic:** Yes
 
-⚠️ **Note:**  
+**Note:**  
 This model strongly benefits from GPU acceleration.  
 Aurora AI may use **Hugging Face ZeroGPU** automatically when available.
 

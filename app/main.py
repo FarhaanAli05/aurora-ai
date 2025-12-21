@@ -55,11 +55,27 @@ HTML_FORM = """
         bgGroup.style.display = 'none';
       }
     }
+    function toggleBackgroundType() {
+      const bgType = document.querySelector('input[name="bg_type"]:checked')?.value;
+      const uploadGroup = document.getElementById('bg-upload-group');
+      const generateGroup = document.getElementById('bg-generate-group');
+      if (bgType === 'upload') {
+        uploadGroup.style.display = 'block';
+        generateGroup.style.display = 'none';
+      } else {
+        uploadGroup.style.display = 'none';
+        generateGroup.style.display = 'block';
+      }
+    }
     document.addEventListener('DOMContentLoaded', function() {
       document.querySelectorAll('input[name="mode"]').forEach(radio => {
         radio.addEventListener('change', toggleBackgroundInput);
       });
+      document.querySelectorAll('input[name="bg_type"]').forEach(radio => {
+        radio.addEventListener('change', toggleBackgroundType);
+      });
       toggleBackgroundInput();
+      toggleBackgroundType();
     });
   </script>
 </head>
@@ -113,9 +129,37 @@ HTML_FORM = """
     </div>
 
     <div class="form-group" id="background-group">
-      <label>Background image (optional)</label>
-      <input type="file" name="background" accept="image/*" />
-      <div class="helper">Replace removed background with this image</div>
+      <label>Background (optional)</label>
+      <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+        <div>
+          <input type="radio" name="bg_type" value="upload" id="bg-upload" checked />
+          <label for="bg-upload" style="font-weight: normal; margin-left: 0.25rem;">Upload image</label>
+        </div>
+        <div>
+          <input type="radio" name="bg_type" value="generate" id="bg-generate" />
+          <label for="bg-generate" style="font-weight: normal; margin-left: 0.25rem;">Generate from prompt</label>
+        </div>
+      </div>
+      
+      <div id="bg-upload-group">
+        <input type="file" name="background" accept="image/*" style="margin-top: 0.5rem;" />
+        <div class="helper">Replace removed background with this image</div>
+      </div>
+      
+      <div id="bg-generate-group" style="display: none; margin-top: 0.5rem;">
+        <input type="text" name="bg_prompt" placeholder="e.g., sunset over mountains, abstract blue gradient" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 4px;" />
+        <div style="margin-top: 0.5rem; display: flex; flex-direction: column; gap: 0.25rem;">
+          <div>
+            <input type="radio" name="bg_quality" value="fast" id="bg-quality-fast" checked />
+            <label for="bg-quality-fast" style="font-weight: normal; margin-left: 0.25rem;">Fast (Recommended)</label>
+          </div>
+          <div>
+            <input type="radio" name="bg_quality" value="hq" id="bg-quality-hq" />
+            <label for="bg-quality-hq" style="font-weight: normal; margin-left: 0.25rem;">High Quality (Slower)</label>
+          </div>
+        </div>
+        <div class="helper">AI-generated background using FLUX models</div>
+      </div>
     </div>
 
     <button type="submit">Process</button>
@@ -134,6 +178,9 @@ async def process_image(
     image: UploadFile = File(...),
     mode: str = Form("remove_background"),
     background: UploadFile | None = File(None),
+    bg_type: str = Form("upload"),
+    bg_prompt: str = Form(""),
+    bg_quality: str = Form("fast"),
 ):
     try:
         project_root = Path(__file__).resolve().parents[1]
@@ -147,13 +194,48 @@ async def process_image(
             in_file.write(contents)
 
         bg_path: Path | None = None
-        if background is not None:
+        if bg_type == "upload" and background is not None:
             bg_contents = await background.read()
             if bg_contents:
                 bg_suffix = os.path.splitext(background.filename or "")[1] or ".png"
                 with NamedTemporaryFile(dir=tmp_dir, suffix=bg_suffix, delete=False) as bg_file:
                     bg_path = Path(bg_file.name)
                     bg_file.write(bg_contents)
+        elif bg_type == "generate" and bg_prompt and bg_prompt.strip():
+            try:
+                generated_bg = aurora_inference.generate_background(
+                    prompt=bg_prompt.strip(),
+                    quality=bg_quality
+                )
+                with NamedTemporaryFile(dir=tmp_dir, suffix=".png", delete=False) as bg_file:
+                    bg_path = Path(bg_file.name)
+                    generated_bg.save(bg_path, format="PNG")
+            except Exception as e:
+                error_html = f"""
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Aurora AI - Error</title>
+  <style>
+    body {{ font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; margin: 2rem; }}
+    .card {{ max-width: 480px; padding: 1.5rem; border-radius: 6px; border: 1px solid #fecaca; background: #fef2f2; }}
+    h1 {{ margin-top: 0; color: #b91c1c; }}
+    p {{ margin: 0.5rem 0; }}
+    .btn {{ display: inline-block; margin-top: 1rem; padding: 0.5rem 1rem; border-radius: 4px; border: none; background: #2563eb; color: white; text-decoration: none; }}
+    .btn:hover {{ background: #1d4ed8; }}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Background generation error</h1>
+    <p>{str(e)}</p>
+    <a class="btn" href="/">Back to form</a>
+  </div>
+</body>
+</html>
+"""
+                return HTMLResponse(content=error_html, status_code=400)
 
         with NamedTemporaryFile(dir=tmp_dir, suffix=".png", delete=False) as out_file:
             out_path = Path(out_file.name)

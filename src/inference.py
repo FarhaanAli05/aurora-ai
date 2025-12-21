@@ -14,6 +14,10 @@ _DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 _MODEL = None
 _UPSCALER_2X = None
 _UPSCALER_4X = None
+_FLUX_PIPELINE_FAST = None
+_FLUX_PIPELINE_HQ = None
+_FLUX_PIPELINE_FAST_CPU = None
+_FLUX_PIPELINE_HQ_CPU = None
 
 _TRANSFORM = transforms.Compose(
     [
@@ -237,6 +241,229 @@ def _remove_background_only(
         print(f"✓ Saved composite image to: {output_path}")
     else:
         print(f"✓ Saved transparent image to: {output_path}")
+
+def _load_flux_pipeline(quality: str = "fast", force_cpu: bool = False):
+    global _FLUX_PIPELINE_FAST, _FLUX_PIPELINE_HQ, _FLUX_PIPELINE_FAST_CPU, _FLUX_PIPELINE_HQ_CPU
+    
+    use_cuda = torch.cuda.is_available() and not force_cpu
+    device = torch.device("cuda" if use_cuda else "cpu")
+    
+    if quality == "fast":
+        if force_cpu:
+            if _FLUX_PIPELINE_FAST_CPU is not None:
+                return _FLUX_PIPELINE_FAST_CPU
+        else:
+            if _FLUX_PIPELINE_FAST is not None:
+                return _FLUX_PIPELINE_FAST
+    elif quality == "hq":
+        if force_cpu:
+            if _FLUX_PIPELINE_HQ_CPU is not None:
+                return _FLUX_PIPELINE_HQ_CPU
+        else:
+            if _FLUX_PIPELINE_HQ is not None:
+                return _FLUX_PIPELINE_HQ
+    else:
+        raise ValueError(f"Quality must be 'fast' or 'hq'. Got: {quality}")
+    
+    try:
+        from diffusers import FluxPipeline
+    except ImportError:
+        raise ImportError(
+            "diffusers is not installed. Install it with: pip install diffusers accelerate"
+        )
+    
+    model_id = "black-forest-labs/FLUX.1-dev" if quality == "fast" else "black-forest-labs/FLUX.2-dev"
+    quality_name = "Fast" if quality == "fast" else "High Quality"
+    
+    dtype = torch.float16 if use_cuda else torch.float32
+    
+    print(f"Loading {quality_name} pipeline from {model_id}...")
+    print(f"Device: {'GPU (CUDA)' if use_cuda else 'CPU'}, dtype: {dtype}")
+    
+    try:
+        pipeline = FluxPipeline.from_pretrained(
+            model_id,
+            torch_dtype=dtype,
+            device_map="auto" if use_cuda else None,
+        )
+        
+        if not use_cuda:
+            pipeline = pipeline.to(device)
+        elif hasattr(pipeline, 'to'):
+            pipeline = pipeline.to(device)
+        
+        pipeline.set_progress_bar_config(disable=True)
+        
+        print(f"✓ {quality_name} pipeline loaded successfully on {device}")
+        
+        if quality == "fast":
+            if force_cpu:
+                _FLUX_PIPELINE_FAST_CPU = pipeline
+            else:
+                _FLUX_PIPELINE_FAST = pipeline
+        else:
+            if force_cpu:
+                _FLUX_PIPELINE_HQ_CPU = pipeline
+            else:
+                _FLUX_PIPELINE_HQ = pipeline
+        
+        return pipeline
+        
+    except RuntimeError as e:
+        error_msg = str(e)
+        if "out of memory" in error_msg.lower() or "CUDA out of memory" in error_msg:
+            print(f"GPU OOM detected, falling back to CPU...")
+            try:
+                torch.cuda.empty_cache()
+                device = torch.device("cpu")
+                dtype = torch.float32
+                
+                pipeline = FluxPipeline.from_pretrained(
+                    model_id,
+                    torch_dtype=dtype,
+                    device_map=None,
+                )
+                pipeline = pipeline.to(device)
+                pipeline.set_progress_bar_config(disable=True)
+                
+                print(f"✓ {quality_name} pipeline loaded on CPU (GPU fallback)")
+                
+                if quality == "fast":
+                    _FLUX_PIPELINE_FAST_CPU = pipeline
+                else:
+                    _FLUX_PIPELINE_HQ_CPU = pipeline
+                
+                return pipeline
+            except Exception as fallback_error:
+                raise RuntimeError(
+                    "GPU is out of memory and CPU fallback also failed. "
+                    "Please try again later or use a smaller model."
+                ) from fallback_error
+        elif "CUDA" in error_msg or "GPU" in error_msg:
+            raise RuntimeError(
+                "GPU is currently unavailable. "
+                "Please try again later. On Hugging Face Spaces, the GPU queue may be busy."
+            ) from e
+        elif "timeout" in error_msg.lower() or "queue" in error_msg.lower():
+            raise RuntimeError(
+                "Background generation is taking longer than expected. "
+                "The GPU queue may be busy. Please try again in a moment."
+            ) from e
+        else:
+            raise RuntimeError(
+                f"Failed to load FLUX pipeline: {error_msg}\n"
+                "Please check your internet connection and try again."
+            ) from e
+    except Exception as e:
+        error_msg = str(e)
+        raise RuntimeError(
+            f"Failed to load FLUX pipeline: {error_msg}\n"
+            "Please check your internet connection and try again."
+        ) from e
+
+def generate_background(prompt: str, quality: str = "fast") -> Image.Image:
+    if not prompt or not prompt.strip():
+        raise ValueError("Prompt cannot be empty")
+    
+    if quality not in ("fast", "hq"):
+        raise ValueError(f"Quality must be 'fast' or 'hq'. Got: {quality}")
+    
+    pipeline = _load_flux_pipeline(quality=quality)
+    
+    use_cuda = torch.cuda.is_available()
+    device = torch.device("cuda" if use_cuda else "cpu")
+    
+    if hasattr(pipeline, 'device'):
+        device = pipeline.device
+        use_cuda = device.type == "cuda"
+    elif hasattr(pipeline, 'transformer') and hasattr(pipeline.transformer, 'device'):
+        device = pipeline.transformer.device
+        use_cuda = device.type == "cuda"
+    
+    quality_name = "Fast" if quality == "fast" else "High Quality"
+    print(f"Generating background with {quality_name} mode on {device}...")
+    print(f"Prompt: {prompt}")
+    
+    try:
+        generator = torch.Generator(device=device)
+        generator.manual_seed(42)
+        
+        if use_cuda:
+            with torch.autocast(device_type="cuda", dtype=torch.float16):
+                result = pipeline(
+                    prompt=prompt,
+                    num_inference_steps=20 if quality == "fast" else 28,
+                    guidance_scale=3.5,
+                    generator=generator,
+                    height=1024,
+                    width=1024,
+                )
+        else:
+            result = pipeline(
+                prompt=prompt,
+                num_inference_steps=20 if quality == "fast" else 28,
+                guidance_scale=3.5,
+                generator=generator,
+                height=1024,
+                width=1024,
+            )
+        
+        image = result.images[0]
+        
+        print(f"✓ Background generated successfully")
+        return image
+        
+    except RuntimeError as e:
+        error_msg = str(e)
+        if "out of memory" in error_msg.lower() or "CUDA out of memory" in error_msg:
+            print(f"GPU OOM during generation, attempting CPU fallback...")
+            try:
+                torch.cuda.empty_cache()
+                device = torch.device("cpu")
+                
+                pipeline = _load_flux_pipeline(quality=quality, force_cpu=True)
+                
+                generator = torch.Generator(device=device)
+                generator.manual_seed(42)
+                
+                result = pipeline(
+                    prompt=prompt,
+                    num_inference_steps=20 if quality == "fast" else 28,
+                    guidance_scale=3.5,
+                    generator=generator,
+                    height=1024,
+                    width=1024,
+                )
+                
+                image = result.images[0]
+                print(f"✓ Background generated successfully on CPU (GPU fallback)")
+                return image
+            except Exception as fallback_error:
+                raise RuntimeError(
+                    "GPU is out of memory and CPU fallback also failed. "
+                    "Please try again later or use Fast mode."
+                ) from fallback_error
+        elif "CUDA" in error_msg or "GPU" in error_msg:
+            raise RuntimeError(
+                "GPU is currently unavailable. "
+                "Please try again later. On Hugging Face Spaces, the GPU queue may be busy."
+            ) from e
+        elif "timeout" in error_msg.lower():
+            raise RuntimeError(
+                "Background generation timed out. "
+                "The GPU queue may be busy. Please try again or use Fast mode."
+            ) from e
+        else:
+            raise RuntimeError(
+                f"Failed to generate background: {error_msg}\n"
+                "Please try again or check your prompt."
+            ) from e
+    except Exception as e:
+        error_msg = str(e)
+        raise RuntimeError(
+            f"Failed to generate background: {error_msg}\n"
+            "Please try again or check your prompt."
+        ) from e
 
 def _enhance_only(input_path: str, output_path: str, scale: int = 4) -> None:
     print(f"Loading image: {input_path}")

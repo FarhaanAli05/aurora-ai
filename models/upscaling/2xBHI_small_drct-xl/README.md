@@ -16,19 +16,16 @@ This is the **recommended default enhancement mode** when speed is preferred ove
 ## Required Files
 The following files must be present in this directory:
 
-- `model.pth` — model weights
-- `model.toml` — model configuration (Spandrel metadata)
+- `model.pth` - model weights
+- `model.toml` - model configuration (Spandrel metadata)
 
 ---
 
 ## Where to Place
 models/upscaling/2xBHI_small_drct-xl/
-├── model.pth
-├── model.toml
-└── README.md
-
-yaml
-Copy code
+  model.pth
+  model.toml
+  README.md
 
 ---
 
