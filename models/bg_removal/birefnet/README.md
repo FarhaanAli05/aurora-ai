@@ -13,7 +13,7 @@ BiRefNet provides strong edge accuracy and handles complex subjects such as hair
 ---
 
 ## Required Files
-- `latest.pth` — BiRefNet model weights
+- `latest.pth` - BiRefNet model weights
 
 > The filename `latest.pth` is used intentionally and matches the upstream project.
 
@@ -21,11 +21,8 @@ BiRefNet provides strong edge accuracy and handles complex subjects such as hair
 
 ## Where to Place
 models/bg_removal/birefnet/
-├── latest.pth
-└── README.md
-
-yaml
-Copy code
+  latest.pth
+  README.md
 
 ---
 
