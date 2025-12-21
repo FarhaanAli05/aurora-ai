@@ -5,6 +5,7 @@ from tempfile import NamedTemporaryFile
 
 from fastapi import FastAPI, File, UploadFile, Form
 from fastapi.responses import HTMLResponse
+from fastapi.middleware.cors import CORSMiddleware
 
 from src import inference as aurora_inference
 
@@ -12,6 +13,15 @@ app = FastAPI(
     title="Aurora AI",
     description="Image Enhancement Studio - Background removal and AI upscaling.",
     version="0.1.0",
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 @app.on_event("startup")
@@ -100,29 +110,29 @@ HTML_FORM = """
         <div class="radio-option">
           <input type="radio" name="mode" value="enhance_2x" id="mode-enhance-2x" />
           <div>
-            <label for="mode-enhance-2x" class="radio-label">Image Enhancement - Balanced (2×)</label>
+            <label for="mode-enhance-2x" class="radio-label">Image Enhancement - Balanced (2x)</label>
             <div class="radio-desc">Fast, low-artifact upscaling</div>
           </div>
         </div>
         <div class="radio-option">
           <input type="radio" name="mode" value="enhance_4x" id="mode-enhance-4x" />
           <div>
-            <label for="mode-enhance-4x" class="radio-label">Image Enhancement - Strong (4×)</label>
+            <label for="mode-enhance-4x" class="radio-label">Image Enhancement - Strong (4x)</label>
             <div class="radio-desc">High-detail upscaling</div>
           </div>
         </div>
         <div class="radio-option">
           <input type="radio" name="mode" value="advanced_2x" id="mode-advanced-2x" />
           <div>
-            <label for="mode-advanced-2x" class="radio-label">Advanced - Balanced (2×)</label>
-            <div class="radio-desc">Remove background, then enhance (2×)</div>
+            <label for="mode-advanced-2x" class="radio-label">Advanced - Balanced (2x)</label>
+            <div class="radio-desc">Remove background, then enhance (2x)</div>
           </div>
         </div>
         <div class="radio-option">
           <input type="radio" name="mode" value="advanced_4x" id="mode-advanced-4x" />
           <div>
-            <label for="mode-advanced-4x" class="radio-label">Advanced - Strong (4×)</label>
-            <div class="radio-desc">Remove background, then enhance (4×)</div>
+            <label for="mode-advanced-4x" class="radio-label">Advanced - Strong (4x)</label>
+            <div class="radio-desc">Remove background, then enhance (4x)</div>
           </div>
         </div>
       </div>

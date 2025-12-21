@@ -57,6 +57,10 @@ export default function Home() {
     setToasts((prev) => [...prev, { id, message, type }])
   }
 
+  const handleSuccess = (message: string) => {
+    addToast(message, 'success')
+  }
+
   const removeToast = (id: string) => {
     setToasts((prev) => prev.filter((toast) => toast.id !== id))
   }
@@ -76,6 +80,7 @@ export default function Home() {
         onImageUpload={handleImageUpload}
         onBackgroundRemoved={handleBackgroundRemoved}
         onError={addToast}
+        onSuccess={handleSuccess}
       />
       <ToastContainer toasts={toasts} onRemove={removeToast} />
     </div>
