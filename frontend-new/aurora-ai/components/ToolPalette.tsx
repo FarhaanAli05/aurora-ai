@@ -7,13 +7,25 @@ interface ToolPaletteProps {
   tools: Tool[]
   selectedTool: string | null
   onToolSelect: (toolId: string) => void
+  hasTransparentBg?: boolean
 }
 
 export default function ToolPalette({
   tools,
   selectedTool,
   onToolSelect,
+  hasTransparentBg = false,
 }: ToolPaletteProps) {
+  const getToolDisabledState = (toolId: string) => {
+    if (toolId === 'replace-bg' && !hasTransparentBg) {
+      return {
+        disabled: true,
+        disabledReason: 'Remove background first',
+      }
+    }
+    return { disabled: false, disabledReason: undefined }
+  }
+
   return (
     <aside className="w-80 bg-white border-r border-gray-200 flex flex-col overflow-hidden">
       <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
@@ -23,14 +35,19 @@ export default function ToolPalette({
         </p>
       </div>
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
-        {tools.map((tool) => (
-          <ToolCard
-            key={tool.id}
-            tool={tool}
-            isSelected={selectedTool === tool.id}
-            onSelect={() => onToolSelect(tool.id)}
-          />
-        ))}
+        {tools.map((tool) => {
+          const { disabled, disabledReason } = getToolDisabledState(tool.id)
+          return (
+            <ToolCard
+              key={tool.id}
+              tool={tool}
+              isSelected={selectedTool === tool.id}
+              onSelect={() => !disabled && onToolSelect(tool.id)}
+              disabled={disabled}
+              disabledReason={disabledReason}
+            />
+          )
+        })}
       </div>
     </aside>
   )

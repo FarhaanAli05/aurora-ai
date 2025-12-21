@@ -10,29 +10,25 @@ const TOOLS: Tool[] = [
     id: 'enhance',
     title: 'Enhance Image',
     description: 'Upscale and improve image quality with AI',
-    icon: '✨',
-    thumbnail: '/images/tools/enhance.jpg',
+    thumbnail: '/images/tools/enhance.webp',
   },
   {
     id: 'remove-bg',
     title: 'Remove Background',
     description: 'One-click background remover, let the AI do the work',
-    icon: '✂️',
-    thumbnail: '/images/tools/remove-bg.jpg',
+    thumbnail: '/images/tools/remove-bg.webp',
   },
   {
     id: 'replace-bg',
     title: 'Replace Background',
     description: 'Swap backgrounds with images or AI-generated scenes',
-    icon: '🖼️',
-    thumbnail: '/images/tools/replace-bg.jpg',
+    thumbnail: '/images/tools/generate-bg.webp',
   },
   {
     id: 'generate-bg',
     title: 'Generate Background',
     description: 'Create backgrounds from text prompts using AI',
-    icon: '🎨',
-    thumbnail: '/images/tools/generate-bg.jpg',
+    thumbnail: '/images/tools/generate-bg.webp',
     experimental: true,
   },
 ]
@@ -60,6 +56,7 @@ export default function Home() {
         tools={TOOLS}
         selectedTool={selectedTool}
         onToolSelect={handleToolSelect}
+        hasTransparentBg={hasTransparentBg}
       />
       <MainEditorPanel
         selectedTool={selectedTool}
