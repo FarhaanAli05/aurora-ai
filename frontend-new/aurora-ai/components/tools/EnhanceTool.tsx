@@ -47,14 +47,6 @@ export default function EnhanceTool({
 
   return (
     <div className="space-y-6">
-      <div className="card p-6">
-        <img
-          src={uploadedImage}
-          alt="Uploaded"
-          className="w-full h-auto rounded-lg"
-        />
-      </div>
-
       <div className="card p-6 space-y-6">
         <div>
           <label className="block text-sm font-semibold text-[#e5e7eb] mb-3">

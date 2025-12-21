@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import ImageUpload from './ImageUpload'
 import EmptyState from './EmptyState'
 import EnhanceTool from './tools/EnhanceTool'
@@ -26,19 +26,56 @@ export default function MainEditorPanel({
   onError,
   onSuccess,
 }: MainEditorPanelProps) {
+  const [originalImage, setOriginalImage] = useState<string | null>(null)
+  const [currentImage, setCurrentImage] = useState<string | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
-  const [processedImage, setProcessedImage] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (uploadedImage) {
+      if (originalImage && originalImage.startsWith('blob:')) {
+        URL.revokeObjectURL(originalImage)
+      }
+      if (currentImage && currentImage.startsWith('blob:') && currentImage !== originalImage) {
+        URL.revokeObjectURL(currentImage)
+      }
+      
+      setOriginalImage(uploadedImage)
+      setCurrentImage(uploadedImage)
+    }
+  }, [uploadedImage])
+
+  useEffect(() => {
+    return () => {
+      if (originalImage && originalImage.startsWith('blob:')) {
+        URL.revokeObjectURL(originalImage)
+      }
+      if (currentImage && currentImage.startsWith('blob:') && currentImage !== originalImage) {
+        URL.revokeObjectURL(currentImage)
+      }
+    }
+  }, [originalImage, currentImage])
 
   const handleProcessingStart = () => {
     setIsProcessing(true)
-    setProcessedImage(null)
   }
 
   const handleProcessingComplete = (result: string) => {
     setIsProcessing(false)
-    setProcessedImage(result)
-    if (onSuccess && selectedTool === 'remove-bg') {
-      onSuccess('Background removed successfully!')
+    
+    if (currentImage && currentImage.startsWith('blob:') && currentImage !== originalImage) {
+      URL.revokeObjectURL(currentImage)
+    }
+    
+    setCurrentImage(result)
+    
+    if (onSuccess) {
+      if (selectedTool === 'remove-bg') {
+        onSuccess('Background removed successfully!')
+      } else if (selectedTool === 'enhance') {
+        onSuccess('Image enhanced successfully!')
+      } else if (selectedTool === 'replace-bg') {
+        onSuccess('Background replaced successfully!')
+      }
     }
   }
 
@@ -56,12 +93,12 @@ export default function MainEditorPanel({
       return <EmptyState />
     }
 
-    if (!uploadedImage) {
+    if (!uploadedImage || !currentImage) {
       return <ImageUpload onImageUpload={onImageUpload} />
     }
 
     const commonProps = {
-      uploadedImage,
+      uploadedImage: currentImage,
       isProcessing,
       onProcessingStart: handleProcessingStart,
       onProcessingComplete: handleProcessingComplete,
@@ -105,38 +142,39 @@ export default function MainEditorPanel({
       <div className="flex-1 overflow-y-auto p-6">
         <div className="max-w-4xl mx-auto">
           {renderToolContent()}
-          {processedImage && (
+          {currentImage && (
             <div className="mt-6 card p-6">
               <h3 className="text-lg font-semibold text-[#e5e7eb] mb-4">
-                Result
+                {isProcessing ? 'Processing...' : originalImage && currentImage !== originalImage ? 'Current Image' : 'Image'}
               </h3>
               <div className="rounded-lg overflow-hidden border border-[#2d3239] mb-4">
                 <img
-                  src={processedImage}
-                  alt="Processed result"
+                  src={currentImage}
+                  alt={isProcessing ? 'Processing' : 'Current image'}
                   className="w-full h-auto"
                 />
               </div>
               <div className="flex gap-3">
                 <a
-                  href={processedImage}
+                  href={currentImage}
                   download="aurora-result.png"
                   className="btn btn-primary"
                 >
                   Download
                 </a>
-                <button
-                  className="btn btn-secondary"
-                  onClick={() => {
-                    if (processedImage.startsWith('blob:')) {
-                      URL.revokeObjectURL(processedImage)
-                    }
-                    setProcessedImage(null)
-                    setIsProcessing(false)
-                  }}
-                >
-                  Process Another
-                </button>
+                {originalImage && currentImage !== originalImage && (
+                  <button
+                    className="btn btn-secondary"
+                    onClick={() => {
+                      if (currentImage && currentImage.startsWith('blob:') && currentImage !== originalImage) {
+                        URL.revokeObjectURL(currentImage)
+                      }
+                      setCurrentImage(originalImage)
+                    }}
+                  >
+                    Reset to Original
+                  </button>
+                )}
               </div>
             </div>
           )}

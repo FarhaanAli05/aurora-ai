@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { processImage } from '@/lib/api'
+import { hasTransparency, compositeImages } from '@/lib/imageUtils'
 import GenerateBgTool from './GenerateBgTool'
 
 interface ReplaceBgToolProps {
@@ -23,7 +24,16 @@ export default function ReplaceBgTool({
 }: ReplaceBgToolProps) {
   const [bgType, setBgType] = useState<'upload' | 'generate'>('upload')
   const [bgImage, setBgImage] = useState<string | null>(null)
+  const [imageHasTransparency, setImageHasTransparency] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (uploadedImage && hasTransparentBg) {
+      hasTransparency(uploadedImage).then(setImageHasTransparency)
+    } else {
+      setImageHasTransparency(false)
+    }
+  }, [uploadedImage, hasTransparentBg])
 
   const handleBgUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -46,6 +56,12 @@ export default function ReplaceBgTool({
     onProcessingStart()
 
     try {
+      if (imageHasTransparency && bgType === 'upload' && bgImage) {
+        const compositeUrl = await compositeImages(uploadedImage, bgImage)
+        onProcessingComplete(compositeUrl)
+        return
+      }
+
       const response = await fetch(uploadedImage)
       const blob = await response.blob()
       const file = new File([blob], 'image.jpg', { type: blob.type || 'image/jpeg' })
@@ -88,14 +104,6 @@ export default function ReplaceBgTool({
     return (
       <div className="space-y-6">
         <div className="card p-6">
-          <img
-            src={uploadedImage}
-            alt="Uploaded"
-            className="w-full h-auto rounded-lg"
-          />
-        </div>
-
-        <div className="card p-6">
           <div className="flex items-start gap-3 p-4 bg-amber-500/10 border border-amber-500/30 rounded-lg">
             <span className="text-2xl opacity-70">💡</span>
             <div>
@@ -115,14 +123,6 @@ export default function ReplaceBgTool({
 
   return (
     <div className="space-y-6">
-      <div className="card p-6">
-        <img
-          src={uploadedImage}
-          alt="Uploaded"
-          className="w-full h-auto rounded-lg"
-        />
-      </div>
-
       <div className="card p-6 space-y-6">
         <div>
           <label className="block text-sm font-semibold text-[#e5e7eb] mb-3">
@@ -198,6 +198,7 @@ export default function ReplaceBgTool({
         {bgType === 'generate' && (
           <GenerateBgTool
             uploadedImage={uploadedImage}
+            hasTransparency={imageHasTransparency}
             onProcessingStart={onProcessingStart}
             onProcessingComplete={onProcessingComplete}
             onProcessingError={onProcessingError}
