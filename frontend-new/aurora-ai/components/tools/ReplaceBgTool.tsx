@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
+import { processImage } from '@/lib/api'
 import GenerateBgTool from './GenerateBgTool'
 
 interface ReplaceBgToolProps {
@@ -43,19 +44,44 @@ export default function ReplaceBgTool({
     }
 
     onProcessingStart()
-    
-    setTimeout(() => {
-      if (Math.random() < 0.1) {
+
+    try {
+      const response = await fetch(uploadedImage)
+      const blob = await response.blob()
+      const file = new File([blob], 'image.jpg', { type: blob.type || 'image/jpeg' })
+
+      let resultBlob: Blob
+
+      if (bgType === 'upload' && bgImage) {
+        const bgResponse = await fetch(bgImage)
+        const bgBlob = await bgResponse.blob()
+        const bgFile = new File([bgBlob], 'background.jpg', {
+          type: bgBlob.type || 'image/jpeg',
+        })
+
+        resultBlob = await processImage(file, {
+          mode: 'remove_background',
+          backgroundFile: bgFile,
+          bgType: 'upload',
+        })
+      } else {
+        onProcessingError('Please generate a background first')
+        return
+      }
+
+      const objectUrl = URL.createObjectURL(resultBlob)
+      onProcessingComplete(objectUrl)
+    } catch (error) {
+      if (error instanceof Error) {
+        onProcessingError(error.message)
+      } else if (typeof error === 'string') {
+        onProcessingError(error)
+      } else {
         onProcessingError(
           'Failed to replace background. Please try again with a different background image.'
         )
-        return
       }
-      
-      setTimeout(() => {
-        onProcessingComplete(uploadedImage)
-      }, 2500)
-    }, 500)
+    }
   }
 
   if (!hasTransparentBg) {
@@ -171,6 +197,7 @@ export default function ReplaceBgTool({
 
         {bgType === 'generate' && (
           <GenerateBgTool
+            uploadedImage={uploadedImage}
             onProcessingStart={onProcessingStart}
             onProcessingComplete={onProcessingComplete}
             onProcessingError={onProcessingError}
@@ -178,13 +205,15 @@ export default function ReplaceBgTool({
           />
         )}
 
-        <button
-          className="btn btn-primary w-full py-3 text-base font-semibold"
-          onClick={handleProcess}
-          disabled={isProcessing || (bgType === 'upload' && !bgImage)}
-        >
-          {isProcessing ? 'Processing...' : 'Replace Background'}
-        </button>
+        {bgType === 'upload' && (
+          <button
+            className="btn btn-primary w-full py-3 text-base font-semibold"
+            onClick={handleProcess}
+            disabled={isProcessing || !bgImage}
+          >
+            {isProcessing ? 'Processing...' : 'Replace Background'}
+          </button>
+        )}
 
         {isProcessing && (
           <div className="flex flex-col items-center gap-3 p-6 bg-[#181b23] rounded-lg border border-[#2d3239]">
