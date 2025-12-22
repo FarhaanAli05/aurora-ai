@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import ReactBeforeSliderComponent from 'react-before-after-slider-component'
+import 'react-before-after-slider-component/dist/build.css'
 import ImageUpload from './ImageUpload'
 import EmptyState from './EmptyState'
 import EnhanceTool from './tools/EnhanceTool'
@@ -29,6 +31,7 @@ export default function MainEditorPanel({
   const [originalImage, setOriginalImage] = useState<string | null>(null)
   const [currentImage, setCurrentImage] = useState<string | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
+  const [isCompareMode, setIsCompareMode] = useState(false)
 
   useEffect(() => {
     if (uploadedImage) {
@@ -41,6 +44,7 @@ export default function MainEditorPanel({
       
       setOriginalImage(uploadedImage)
       setCurrentImage(uploadedImage)
+      setIsCompareMode(false)
     }
   }, [uploadedImage])
 
@@ -144,15 +148,53 @@ export default function MainEditorPanel({
           {renderToolContent()}
           {currentImage && (
             <div className="mt-6 card p-6">
-              <h3 className="text-lg font-semibold text-[#e5e7eb] mb-4">
-                {isProcessing ? 'Processing...' : originalImage && currentImage !== originalImage ? 'Current Image' : 'Image'}
-              </h3>
-              <div className="rounded-lg overflow-hidden border border-[#2d3239] mb-4">
-                <img
-                  src={currentImage}
-                  alt={isProcessing ? 'Processing' : 'Current image'}
-                  className="w-full h-auto"
-                />
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-[#e5e7eb]">
+                  {isProcessing
+                    ? 'Processing...'
+                    : isCompareMode
+                    ? 'Before / After'
+                    : originalImage && currentImage !== originalImage
+                    ? 'Current Image'
+                    : 'Image'}
+                </h3>
+                {originalImage &&
+                  currentImage !== originalImage &&
+                  !isProcessing && (
+                    <button
+                      className="btn btn-secondary text-sm"
+                      onClick={() => setIsCompareMode(!isCompareMode)}
+                    >
+                      {isCompareMode ? 'Exit Compare' : 'Compare'}
+                    </button>
+                  )}
+              </div>
+              <div className="rounded-lg overflow-hidden border border-[#2d3239] mb-4 bg-[#181b23]">
+                {isCompareMode &&
+                originalImage &&
+                currentImage !== originalImage ? (
+                  <div className="relative w-full [&_.react-before-after-slider-component]:rounded-lg">
+                    <ReactBeforeSliderComponent
+                      firstImage={{
+                        imageUrl: originalImage,
+                        alt: 'Original image',
+                      }}
+                      secondImage={{
+                        imageUrl: currentImage,
+                        alt: 'Current image',
+                      }}
+                      delimiterColor="#3b82f6"
+                      currentPercentPosition={50}
+                      withResizeFeel={true}
+                    />
+                  </div>
+                ) : (
+                  <img
+                    src={currentImage}
+                    alt={isProcessing ? 'Processing' : 'Current image'}
+                    className="w-full h-auto"
+                  />
+                )}
               </div>
               <div className="flex gap-3">
                 <a
@@ -170,6 +212,7 @@ export default function MainEditorPanel({
                         URL.revokeObjectURL(currentImage)
                       }
                       setCurrentImage(originalImage)
+                      setIsCompareMode(false)
                     }}
                   >
                     Reset to Original

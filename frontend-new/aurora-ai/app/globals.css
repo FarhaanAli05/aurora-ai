@@ -80,3 +80,17 @@
 .slide-in-from-top-5 {
   animation: slide-in-from-top 0.3s ease-out, fade-in 0.3s ease-out;
 }
+
+.react-before-after-slider-component {
+  background-color: var(--bg-panel);
+}
+
+.react-before-after-slider-component .delimiter {
+  background-color: #3b82f6;
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
+}
+
+.react-before-after-slider-component .delimiter-icon {
+  color: #3b82f6;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
