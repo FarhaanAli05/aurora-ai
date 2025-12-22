@@ -12,24 +12,28 @@ const TOOLS: Tool[] = [
     title: 'Enhance Image',
     description: 'Upscale and improve image quality with AI',
     thumbnail: '/images/tools/enhance.webp',
+    icon: '/icons/super-scale.svg',
   },
   {
     id: 'remove-bg',
     title: 'Remove Background',
     description: 'One-click background remover, let the AI do the work',
     thumbnail: '/images/tools/remove-bg.webp',
+    icon: '/icons/remove-background.svg',
   },
   {
     id: 'replace-bg',
     title: 'Replace Background',
     description: 'Swap backgrounds with images or AI-generated scenes',
     thumbnail: '/images/tools/generate-bg.webp',
+    icon: '/icons/backdrop.svg',
   },
   {
     id: 'generate-bg',
     title: 'Generate Background',
     description: 'Create backgrounds from text prompts using AI',
     thumbnail: '/images/tools/generate-bg.webp',
+    icon: '/icons/backdrop.svg',
     experimental: true,
   },
 ]

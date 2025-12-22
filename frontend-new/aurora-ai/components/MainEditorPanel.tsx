@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import ReactBeforeSliderComponent from 'react-before-after-slider-component'
 import 'react-before-after-slider-component/dist/build.css'
 import ImageUpload from './ImageUpload'
@@ -32,19 +32,20 @@ export default function MainEditorPanel({
   const [currentImage, setCurrentImage] = useState<string | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
   const [isCompareMode, setIsCompareMode] = useState(false)
+  const lastUploadedImageRef = useRef<string | null>(null)
 
   useEffect(() => {
-    if (uploadedImage) {
-      if (originalImage && originalImage.startsWith('blob:')) {
-        URL.revokeObjectURL(originalImage)
-      }
-      if (currentImage && currentImage.startsWith('blob:') && currentImage !== originalImage) {
-        URL.revokeObjectURL(currentImage)
+    if (uploadedImage && uploadedImage !== lastUploadedImageRef.current) {
+      const prevOriginal = lastUploadedImageRef.current
+      
+      if (prevOriginal && prevOriginal.startsWith('blob:')) {
+        URL.revokeObjectURL(prevOriginal)
       }
       
       setOriginalImage(uploadedImage)
       setCurrentImage(uploadedImage)
       setIsCompareMode(false)
+      lastUploadedImageRef.current = uploadedImage
     }
   }, [uploadedImage])
 
@@ -145,9 +146,8 @@ export default function MainEditorPanel({
       </header>
       <div className="flex-1 overflow-y-auto p-6">
         <div className="max-w-4xl mx-auto">
-          {renderToolContent()}
           {currentImage && (
-            <div className="mt-6 card p-6">
+            <div className="mb-6 card p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-[#e5e7eb]">
                   {isProcessing
@@ -221,6 +221,7 @@ export default function MainEditorPanel({
               </div>
             </div>
           )}
+          {renderToolContent()}
         </div>
       </div>
     </main>
