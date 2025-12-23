@@ -7,33 +7,54 @@ import GenerateBgTool from './GenerateBgTool'
 
 interface ReplaceBgToolProps {
   uploadedImage: string
-  hasTransparentBg: boolean
   isProcessing: boolean
   onProcessingStart: () => void
   onProcessingComplete: (result: string) => void
   onProcessingError: (error: Error | string) => void
+  initialBgType?: 'upload' | 'generate'
 }
 
 export default function ReplaceBgTool({
   uploadedImage,
-  hasTransparentBg,
   isProcessing,
   onProcessingStart,
   onProcessingComplete,
   onProcessingError,
+  initialBgType = 'upload',
 }: ReplaceBgToolProps) {
-  const [bgType, setBgType] = useState<'upload' | 'generate'>('upload')
+  const [bgType, setBgType] = useState<'upload' | 'generate'>(initialBgType)
   const [bgImage, setBgImage] = useState<string | null>(null)
-  const [imageHasTransparency, setImageHasTransparency] = useState(false)
+  const [imageHasTransparency, setImageHasTransparency] = useState<boolean | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    if (uploadedImage && hasTransparentBg) {
-      hasTransparency(uploadedImage).then(setImageHasTransparency)
-    } else {
-      setImageHasTransparency(false)
+    setBgType(initialBgType)
+  }, [initialBgType])
+
+  useEffect(() => {
+    let cancelled = false
+
+    if (!uploadedImage) {
+      setImageHasTransparency(null)
+      return
     }
-  }, [uploadedImage, hasTransparentBg])
+
+    hasTransparency(uploadedImage)
+      .then((result) => {
+        if (!cancelled) {
+          setImageHasTransparency(result)
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setImageHasTransparency(false)
+        }
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [uploadedImage])
 
   const handleBgUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -100,21 +121,36 @@ export default function ReplaceBgTool({
     }
   }
 
-  if (!hasTransparentBg) {
+  if (imageHasTransparency === false) {
     return (
       <div className="space-y-6">
         <div className="card p-6">
           <div className="flex items-start gap-3 p-4 bg-amber-500/10 border border-amber-500/30 rounded-lg">
-            <span className="text-2xl opacity-70">💡</span>
+            <span className="text-2xl opacity-70">ℹ️</span>
             <div>
               <p className="font-medium text-amber-400 mb-1">
                 Background removal required
               </p>
               <p className="text-sm text-[#9ca3af]">
-                Please remove the background first, or upload an image with a
-                transparent background to use this tool.
+                Remove the background first to replace or generate a background,
+                or upload an image that already has a transparent background.
               </p>
             </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (imageHasTransparency === null) {
+    return (
+      <div className="space-y-6">
+        <div className="card p-6">
+          <div className="flex items-center gap-3">
+            <div className="w-5 h-5 border-2 border-[#2d3239] border-t-primary-600 rounded-full animate-spin" />
+            <p className="text-sm text-[#9ca3af]">
+              Checking image transparency...
+            </p>
           </div>
         </div>
       </div>
@@ -198,7 +234,6 @@ export default function ReplaceBgTool({
         {bgType === 'generate' && (
           <GenerateBgTool
             uploadedImage={uploadedImage}
-            hasTransparency={imageHasTransparency}
             onProcessingStart={onProcessingStart}
             onProcessingComplete={onProcessingComplete}
             onProcessingError={onProcessingError}

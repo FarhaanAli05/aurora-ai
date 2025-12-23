@@ -6,7 +6,6 @@ import { compositeImages } from '@/lib/imageUtils'
 
 interface GenerateBgToolProps {
   uploadedImage: string
-  hasTransparency?: boolean
   isProcessing: boolean
   onProcessingStart: () => void
   onProcessingComplete: (result: string) => void
@@ -15,7 +14,6 @@ interface GenerateBgToolProps {
 
 export default function GenerateBgTool({
   uploadedImage,
-  hasTransparency = false,
   isProcessing,
   onProcessingStart,
   onProcessingComplete,

@@ -41,7 +41,6 @@ const TOOLS: Tool[] = [
 export default function Home() {
   const [selectedTool, setSelectedTool] = useState<string | null>(null)
   const [uploadedImage, setUploadedImage] = useState<string | null>(null)
-  const [hasTransparentBg, setHasTransparentBg] = useState(false)
   const [toasts, setToasts] = useState<ToastMessage[]>([])
 
   const handleToolSelect = (toolId: string) => {
@@ -50,10 +49,6 @@ export default function Home() {
 
   const handleImageUpload = (image: string) => {
     setUploadedImage(image)
-  }
-
-  const handleBackgroundRemoved = () => {
-    setHasTransparentBg(true)
   }
 
   const addToast = (message: string, type: 'error' | 'success' | 'info' = 'error') => {
@@ -75,14 +70,11 @@ export default function Home() {
         tools={TOOLS}
         selectedTool={selectedTool}
         onToolSelect={handleToolSelect}
-        hasTransparentBg={hasTransparentBg}
       />
       <MainEditorPanel
         selectedTool={selectedTool}
         uploadedImage={uploadedImage}
-        hasTransparentBg={hasTransparentBg}
         onImageUpload={handleImageUpload}
-        onBackgroundRemoved={handleBackgroundRemoved}
         onError={addToast}
         onSuccess={handleSuccess}
       />
