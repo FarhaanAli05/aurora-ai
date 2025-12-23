@@ -8,13 +8,12 @@ import EmptyState from './EmptyState'
 import EnhanceTool from './tools/EnhanceTool'
 import RemoveBgTool from './tools/RemoveBgTool'
 import ReplaceBgTool from './tools/ReplaceBgTool'
+import { prepareImagesForComparison } from '@/lib/imageUtils'
 
 interface MainEditorPanelProps {
   selectedTool: string | null
   uploadedImage: string | null
-  hasTransparentBg: boolean
   onImageUpload: (image: string) => void
-  onBackgroundRemoved: () => void
   onError?: (message: string) => void
   onSuccess?: (message: string) => void
 }
@@ -22,9 +21,7 @@ interface MainEditorPanelProps {
 export default function MainEditorPanel({
   selectedTool,
   uploadedImage,
-  hasTransparentBg,
   onImageUpload,
-  onBackgroundRemoved,
   onError,
   onSuccess,
 }: MainEditorPanelProps) {
@@ -32,18 +29,28 @@ export default function MainEditorPanel({
   const [currentImage, setCurrentImage] = useState<string | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
   const [isCompareMode, setIsCompareMode] = useState(false)
+  const [compareBeforeUrl, setCompareBeforeUrl] = useState<string | null>(null)
+  const [compareAfterUrl, setCompareAfterUrl] = useState<string | null>(null)
   const lastUploadedImageRef = useRef<string | null>(null)
 
   useEffect(() => {
     if (uploadedImage && uploadedImage !== lastUploadedImageRef.current) {
       const prevOriginal = lastUploadedImageRef.current
       
-      if (prevOriginal && prevOriginal.startsWith('blob:')) {
-        URL.revokeObjectURL(prevOriginal)
-      }
+      setOriginalImage((prevOrig) => {
+        if (prevOrig && prevOrig.startsWith('blob:') && prevOrig !== prevOriginal) {
+          URL.revokeObjectURL(prevOrig)
+        }
+        return uploadedImage
+      })
       
-      setOriginalImage(uploadedImage)
-      setCurrentImage(uploadedImage)
+      setCurrentImage((prevCurrent) => {
+        if (prevCurrent && prevCurrent.startsWith('blob:') && prevCurrent !== prevOriginal) {
+          URL.revokeObjectURL(prevCurrent)
+        }
+        return uploadedImage
+      })
+      
       setIsCompareMode(false)
       lastUploadedImageRef.current = uploadedImage
     }
@@ -60,6 +67,59 @@ export default function MainEditorPanel({
     }
   }, [originalImage, currentImage])
 
+  useEffect(() => {
+    return () => {
+      if (compareBeforeUrl && compareBeforeUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(compareBeforeUrl)
+      }
+      if (compareAfterUrl && compareAfterUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(compareAfterUrl)
+      }
+    }
+  }, [compareBeforeUrl, compareAfterUrl])
+
+  useEffect(() => {
+    if (isCompareMode && originalImage && currentImage && currentImage !== originalImage) {
+      let cancelled = false
+
+      prepareImagesForComparison(originalImage, currentImage, '#181b23')
+        .then(({ before, after }: { before: string; after: string }) => {
+          if (!cancelled) {
+            if (compareBeforeUrl && compareBeforeUrl.startsWith('blob:')) {
+              URL.revokeObjectURL(compareBeforeUrl)
+            }
+            if (compareAfterUrl && compareAfterUrl.startsWith('blob:')) {
+              URL.revokeObjectURL(compareAfterUrl)
+            }
+            setCompareBeforeUrl(before)
+            setCompareAfterUrl(after)
+          } else {
+            URL.revokeObjectURL(before)
+            URL.revokeObjectURL(after)
+          }
+        })
+        .catch((error: Error) => {
+          console.error('Failed to prepare images for comparison:', error)
+          if (onError) {
+            onError('Failed to prepare comparison. Please try again.')
+          }
+        })
+      
+      return () => {
+        cancelled = true
+      }
+    } else {
+      if (compareBeforeUrl && compareBeforeUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(compareBeforeUrl)
+      }
+      if (compareAfterUrl && compareAfterUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(compareAfterUrl)
+      }
+      setCompareBeforeUrl(null)
+      setCompareAfterUrl(null)
+    }
+  }, [isCompareMode, originalImage, currentImage])
+
   const handleProcessingStart = () => {
     setIsProcessing(true)
   }
@@ -67,11 +127,8 @@ export default function MainEditorPanel({
   const handleProcessingComplete = (result: string) => {
     setIsProcessing(false)
     
-    if (currentImage && currentImage.startsWith('blob:') && currentImage !== originalImage) {
-      URL.revokeObjectURL(currentImage)
-    }
-    
     setCurrentImage(result)
+    setIsCompareMode(false)
     
     if (onSuccess) {
       if (selectedTool === 'remove-bg') {
@@ -87,9 +144,19 @@ export default function MainEditorPanel({
   const handleProcessingError = (error: Error | string) => {
     setIsProcessing(false)
     const errorMessage = typeof error === 'string' ? error : error.message
+    const isTimeout = errorMessage.toLowerCase().includes('timeout') || errorMessage.toLowerCase().includes('timed out')
+    
     console.error('Processing error:', errorMessage)
+    
     if (onError) {
-      onError(errorMessage)
+      if (isTimeout) {
+        onError(
+          'Operation timed out. The request did not complete. ' +
+          'Your image has not been modified. Please try again with a smaller image or different settings.'
+        )
+      } else {
+        onError(errorMessage)
+      }
     }
   }
 
@@ -117,14 +184,14 @@ export default function MainEditorPanel({
         return (
           <RemoveBgTool
             {...commonProps}
-            onBackgroundRemoved={onBackgroundRemoved}
           />
         )
       case 'replace-bg':
+      case 'generate-bg':
         return (
           <ReplaceBgTool
             {...commonProps}
-            hasTransparentBg={hasTransparentBg}
+            initialBgType={selectedTool === 'generate-bg' ? 'generate' : 'upload'}
           />
         )
       default:
@@ -146,21 +213,17 @@ export default function MainEditorPanel({
       </header>
       <div className="flex-1 overflow-y-auto p-6">
         <div className="max-w-4xl mx-auto">
-          {currentImage && (
+          {currentImage && originalImage && (
             <div className="mb-6 card p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-[#e5e7eb]">
                   {isProcessing
                     ? 'Processing...'
-                    : isCompareMode
-                    ? 'Before / After'
                     : originalImage && currentImage !== originalImage
                     ? 'Current Image'
                     : 'Image'}
                 </h3>
-                {originalImage &&
-                  currentImage !== originalImage &&
-                  !isProcessing && (
+                {currentImage !== originalImage && !isProcessing && (
                     <button
                       className="btn btn-secondary text-sm"
                       onClick={() => setIsCompareMode(!isCompareMode)}
@@ -172,21 +235,28 @@ export default function MainEditorPanel({
               <div className="rounded-lg overflow-hidden border border-[#2d3239] mb-4 bg-[#181b23]">
                 {isCompareMode &&
                 originalImage &&
-                currentImage !== originalImage ? (
+                currentImage &&
+                currentImage !== originalImage &&
+                compareBeforeUrl &&
+                compareAfterUrl ? (
                   <div className="relative w-full [&_.react-before-after-slider-component]:rounded-lg">
                     <ReactBeforeSliderComponent
                       firstImage={{
-                        imageUrl: originalImage,
-                        alt: 'Original image',
+                        imageUrl: compareBeforeUrl,
+                        alt: 'Previous image',
                       }}
                       secondImage={{
-                        imageUrl: currentImage,
+                        imageUrl: compareAfterUrl,
                         alt: 'Current image',
                       }}
                       delimiterColor="#3b82f6"
                       currentPercentPosition={50}
                       withResizeFeel={true}
                     />
+                  </div>
+                ) : isCompareMode && currentImage !== originalImage ? (
+                  <div className="flex items-center justify-center p-8">
+                    <div className="w-8 h-8 border-2 border-[#2d3239] border-t-primary-600 rounded-full animate-spin" />
                   </div>
                 ) : (
                   <img

@@ -8,7 +8,6 @@ interface RemoveBgToolProps {
   onProcessingStart: () => void
   onProcessingComplete: (result: string) => void
   onProcessingError: (error: Error | string) => void
-  onBackgroundRemoved: () => void
 }
 
 export default function RemoveBgTool({
@@ -17,7 +16,6 @@ export default function RemoveBgTool({
   onProcessingStart,
   onProcessingComplete,
   onProcessingError,
-  onBackgroundRemoved,
 }: RemoveBgToolProps) {
   const handleProcess = async () => {
     onProcessingStart()
@@ -30,9 +28,6 @@ export default function RemoveBgTool({
       const resultBlob = await processImage(file, { mode: 'remove_background' })
 
       const objectUrl = URL.createObjectURL(resultBlob)
-
-      onBackgroundRemoved()
-
       onProcessingComplete(objectUrl)
     } catch (error) {
       if (error instanceof Error) {
