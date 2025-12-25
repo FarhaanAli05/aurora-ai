@@ -9,21 +9,20 @@ env/
 venv/
 ENV/
 .venv/
-tmp/
+backend/tmp/
 
 frontend-old/
-aurora-ai/
 
-data/input/*
-data/output/*
-!data/input/.gitkeep
-!data/output/.gitkeep
+backend/data/input/*
+backend/data/output/*
+!backend/data/input/.gitkeep
+!backend/data/output/.gitkeep
 
-models/**/*.pth
-models/**/*.safetensors
-models/**/*.bin
-models/**/*.ckpt
-models/**/*.onnx
+backend/models/**/*.pth
+backend/models/**/*.safetensors
+backend/models/**/*.bin
+backend/models/**/*.ckpt
+backend/models/**/*.onnx
 
 third_party/InSPyReNet/
 
