@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { processImage } from '@/lib/api'
 import { hasTransparency, compositeImages } from '@/lib/imageUtils'
+import { ImagePlus, Sparkles, Upload } from 'lucide-react'
 import GenerateBgTool from './GenerateBgTool'
 
 interface ReplaceBgToolProps {
@@ -12,6 +13,7 @@ interface ReplaceBgToolProps {
   onProcessingComplete: (result: string) => void
   onProcessingError: (error: Error | string) => void
   initialBgType?: 'upload' | 'generate'
+  disabled?: boolean
 }
 
 export default function ReplaceBgTool({
@@ -21,6 +23,7 @@ export default function ReplaceBgTool({
   onProcessingComplete,
   onProcessingError,
   initialBgType = 'upload',
+  disabled = false,
 }: ReplaceBgToolProps) {
   const [bgType, setBgType] = useState<'upload' | 'generate'>(initialBgType)
   const [bgImage, setBgImage] = useState<string | null>(null)
@@ -34,22 +37,11 @@ export default function ReplaceBgTool({
   useEffect(() => {
     let cancelled = false
 
-    if (!uploadedImage) {
-      setImageHasTransparency(null)
-      return
-    }
+    if (!uploadedImage) return
 
     hasTransparency(uploadedImage)
-      .then((result) => {
-        if (!cancelled) {
-          setImageHasTransparency(result)
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setImageHasTransparency(false)
-        }
-      })
+      .then((result) => !cancelled && setImageHasTransparency(result))
+      .catch(() => !cancelled && setImageHasTransparency(false))
 
     return () => {
       cancelled = true
@@ -57,19 +49,14 @@ export default function ReplaceBgTool({
   }, [uploadedImage])
 
   const handleBgUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const reader = new FileReader()
-      reader.onload = (event) => {
-        if (event.target?.result) {
-          setBgImage(event.target.result as string)
-        }
-      }
-      reader.readAsDataURL(e.target.files[0])
-    }
+    if (!e.target.files?.[0]) return
+    const reader = new FileReader()
+    reader.onload = (ev) => setBgImage(ev.target?.result as string)
+    reader.readAsDataURL(e.target.files[0])
   }
 
   const handleProcess = async () => {
-    if (bgType === 'upload' && !bgImage) {
+    if (!bgImage) {
       onProcessingError('Please upload a background image')
       return
     }
@@ -77,188 +64,189 @@ export default function ReplaceBgTool({
     onProcessingStart()
 
     try {
-      if (imageHasTransparency && bgType === 'upload' && bgImage) {
+      if (imageHasTransparency) {
         const compositeUrl = await compositeImages(uploadedImage, bgImage)
         onProcessingComplete(compositeUrl)
         return
       }
 
-      const response = await fetch(uploadedImage)
-      const blob = await response.blob()
-      const file = new File([blob], 'image.jpg', { type: blob.type || 'image/jpeg' })
+      const fgBlob = await (await fetch(uploadedImage)).blob()
+      const bgBlob = await (await fetch(bgImage)).blob()
 
-      let resultBlob: Blob
-
-      if (bgType === 'upload' && bgImage) {
-        const bgResponse = await fetch(bgImage)
-        const bgBlob = await bgResponse.blob()
-        const bgFile = new File([bgBlob], 'background.jpg', {
-          type: bgBlob.type || 'image/jpeg',
-        })
-
-        resultBlob = await processImage(file, {
+      const resultBlob = await processImage(
+        new File([fgBlob], 'image.jpg'),
+        {
           mode: 'remove_background',
-          backgroundFile: bgFile,
           bgType: 'upload',
-        })
-      } else {
-        onProcessingError('Please generate a background first')
-        return
-      }
+          backgroundFile: new File([bgBlob], 'background.jpg'),
+        }
+      )
 
-      const objectUrl = URL.createObjectURL(resultBlob)
-      onProcessingComplete(objectUrl)
-    } catch (error) {
-      if (error instanceof Error) {
-        onProcessingError(error.message)
-      } else if (typeof error === 'string') {
-        onProcessingError(error)
-      } else {
-        onProcessingError(
-          'Failed to replace background. Please try again with a different background image.'
-        )
-      }
+      onProcessingComplete(URL.createObjectURL(resultBlob))
+    } catch (err) {
+      onProcessingError('Failed to replace background. Please try again.')
     }
   }
 
-  if (imageHasTransparency === false) {
+
+  if (imageHasTransparency === null) {
     return (
-      <div className="space-y-6">
-        <div className="card p-6">
-          <div className="flex items-start gap-3 p-4 bg-amber-500/10 border border-amber-500/30 rounded-lg">
-            <span className="text-2xl opacity-70">ℹ️</span>
-            <div>
-              <p className="font-medium text-amber-400 mb-1">
-                Background removal required
-              </p>
-              <p className="text-sm text-[#9ca3af]">
-                Remove the background first to replace or generate a background,
-                or upload an image that already has a transparent background.
-              </p>
-            </div>
-          </div>
-        </div>
+      <div className="card p-4 flex items-center gap-2 text-sm text-[#9ca3af]">
+        <div className="w-4 h-4 border-2 border-[#2d3239] border-t-primary-600 rounded-full animate-spin" />
+        Checking image transparency…
       </div>
     )
   }
 
-  if (imageHasTransparency === null) {
+  if (imageHasTransparency === false) {
     return (
-      <div className="space-y-6">
-        <div className="card p-6">
-          <div className="flex items-center gap-3">
-            <div className="w-5 h-5 border-2 border-[#2d3239] border-t-primary-600 rounded-full animate-spin" />
-            <p className="text-sm text-[#9ca3af]">
-              Checking image transparency...
-            </p>
-          </div>
-        </div>
+      <div className="card p-4">
+        <p className="text-sm text-amber-400 font-medium mb-1">
+          Background removal required
+        </p>
+        <p className="text-xs text-[#9ca3af]">
+          Remove the background first, or upload an image with transparency.
+        </p>
       </div>
     )
   }
 
   return (
-    <div className="space-y-6">
-      <div className="card p-6 space-y-6">
-        <div>
-          <label className="block text-sm font-semibold text-[#e5e7eb] mb-3">
-            Background Source
-          </label>
-          <div className="space-y-3">
-            <label className="flex items-start gap-3 p-4 border border-[#2d3239] rounded-lg cursor-pointer hover:border-primary-500/50 hover:bg-[#252932] transition-colors">
-              <input
-                type="radio"
-                name="bg_type"
-                value="upload"
-                checked={bgType === 'upload'}
-                onChange={(e) => setBgType(e.target.value as 'upload' | 'generate')}
-                className="mt-1 accent-primary-600"
-              />
-              <div className="flex-1">
-                <div className="font-medium text-[#e5e7eb]">Upload Image</div>
-                <div className="text-sm text-[#9ca3af] mt-1">
-                  Use your own background image
-                </div>
-              </div>
-            </label>
-            <label className="flex items-start gap-3 p-4 border border-[#2d3239] rounded-lg cursor-pointer hover:border-primary-500/50 hover:bg-[#252932] transition-colors">
-              <input
-                type="radio"
-                name="bg_type"
-                value="generate"
-                checked={bgType === 'generate'}
-                onChange={(e) => setBgType(e.target.value as 'upload' | 'generate')}
-                className="mt-1 accent-primary-600"
-              />
-              <div className="flex-1">
-                <div className="font-medium text-[#e5e7eb]">
-                  Generate with AI
-                  <span className="ml-2 text-xs bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded uppercase font-semibold border border-amber-500/30">
-                    Experimental
-                  </span>
-                </div>
-                <div className="text-sm text-[#9ca3af] mt-1">
-                  Create a background from a text prompt
-                </div>
-              </div>
-            </label>
+    <section className="space-y-6 animate-in">
+      <div className="card p-6 md:p-8 space-y-6">
+        <div className="flex items-start gap-4">
+          <div className="w-12 h-12 rounded-xl bg-primary-600/15 text-primary-400 flex items-center justify-center">
+            <ImagePlus className="w-6 h-6" />
+          </div>
+
+          <div className="space-y-1">
+            <h3 className="text-xl font-semibold tracking-tight">
+              Replace Background
+            </h3>
+            <p className="text-sm text-[#9ca3af] leading-relaxed">
+              Seamlessly place your subject into a new environment - upload your own
+              background or generate one with AI.
+            </p>
           </div>
         </div>
 
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <button
+            onClick={() => setBgType('upload')}
+            disabled={isProcessing || disabled}
+            className={`
+              rounded-xl border p-4 text-left transition-all
+              ${bgType === 'upload'
+                ? 'border-primary-500 bg-primary-600/10'
+                : 'border-[#2d3239] hover:border-primary-500/40 hover:bg-[#252932]'
+              }
+            `}
+          >
+            <div className="flex gap-3">
+              <Upload className="w-5 h-5 text-primary-400" />
+              <div>
+                <p className="font-medium text-sm">Upload Background</p>
+                <p className="text-xs text-[#9ca3af]">
+                  Use your own image
+                </p>
+              </div>
+            </div>
+          </button>
+
+          <button
+            onClick={() => setBgType('generate')}
+            disabled={isProcessing || disabled}
+            className={`
+              rounded-xl border p-4 text-left transition-all
+              ${bgType === 'generate'
+                ? 'border-primary-500 bg-primary-600/10'
+                : 'border-[#2d3239] hover:border-primary-500/40 hover:bg-[#252932]'
+              }
+            `}
+          >
+            <div className="flex gap-3">
+              <Sparkles className="w-5 h-5 text-primary-400" />
+              <div>
+                <p className="font-medium text-sm">
+                  Generate with AI
+                  <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 uppercase">
+                    Experimental
+                  </span>
+                </p>
+                <p className="text-xs text-[#9ca3af]">
+                  Describe a scene in text
+                </p>
+              </div>
+            </div>
+          </button>
+        </div>
+
         {bgType === 'upload' && (
-          <div>
-            <label className="block text-sm font-semibold text-[#e5e7eb] mb-3">
-              Background Image
-            </label>
-            <button
-              className="btn btn-secondary mb-3"
-              onClick={() => fileInputRef.current?.click()}
-            >
-              Choose Background Image
-            </button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleBgUpload}
-              className="hidden"
-            />
+          <>
+            <div>
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="btn btn-secondary text-sm"
+                disabled={isProcessing || disabled}
+              >
+                Choose Background Image
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleBgUpload}
+                className="hidden"
+              />
+            </div>
+
             {bgImage && (
-              <div className="mt-3 rounded-lg overflow-hidden border border-[#2d3239] max-w-xs">
-                <img src={bgImage} alt="Background preview" className="w-full h-auto" />
+              <div className="rounded-lg overflow-hidden border border-[#2d3239] max-w-xs">
+                <img src={bgImage} alt="Background preview" />
               </div>
             )}
-          </div>
+
+            <button
+              onClick={handleProcess}
+              disabled={isProcessing || disabled || !bgImage}
+              className={`
+                relative w-full rounded-xl px-6 py-3.5 font-semibold text-sm
+                transition-all
+                ${isProcessing || !bgImage
+                  ? 'bg-[#2d3239] text-[#6b7280] cursor-not-allowed opacity-60'
+                  : 'bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-500 hover:to-primary-400'
+                }
+              `}
+            >
+              {isProcessing ? 'Processing…' : 'Replace Background'}
+            </button>
+          </>
         )}
 
         {bgType === 'generate' && (
           <GenerateBgTool
             uploadedImage={uploadedImage}
+            isProcessing={isProcessing}
             onProcessingStart={onProcessingStart}
             onProcessingComplete={onProcessingComplete}
             onProcessingError={onProcessingError}
-            isProcessing={isProcessing}
+            disabled={disabled}
           />
         )}
-
-        {bgType === 'upload' && (
-          <button
-            className="btn btn-primary w-full py-3 text-base font-semibold"
-            onClick={handleProcess}
-            disabled={isProcessing || !bgImage}
-          >
-            {isProcessing ? 'Processing...' : 'Replace Background'}
-          </button>
-        )}
-
-        {isProcessing && (
-          <div className="flex flex-col items-center gap-3 p-6 bg-[#181b23] rounded-lg border border-[#2d3239]">
-            <div className="w-8 h-8 border-2 border-[#2d3239] border-t-primary-600 rounded-full animate-spin" />
-            <p className="text-sm text-[#9ca3af]">Compositing your image...</p>
-          </div>
-        )}
       </div>
-    </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+        {[
+          { title: 'Seamless Compositing', desc: 'Natural lighting & edges' },
+          { title: 'Upload or Generate', desc: 'Full creative control' },
+          { title: 'Studio-Ready', desc: 'Perfect for marketing & design' },
+        ].map((item) => (
+          <div key={item.title} className="card p-4 text-center space-y-1">
+            <p className="font-medium">{item.title}</p>
+            <p className="text-xs text-[#9ca3af]">{item.desc}</p>
+          </div>
+        ))}
+      </div>
+    </section>
   )
 }
-

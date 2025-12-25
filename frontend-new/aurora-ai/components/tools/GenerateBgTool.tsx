@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { processImage } from '@/lib/api'
-import { compositeImages } from '@/lib/imageUtils'
+import { Sparkles, Zap, Crown } from 'lucide-react'
 
 interface GenerateBgToolProps {
   uploadedImage: string
@@ -10,6 +10,7 @@ interface GenerateBgToolProps {
   onProcessingStart: () => void
   onProcessingComplete: (result: string) => void
   onProcessingError: (error: Error | string) => void
+  disabled?: boolean
 }
 
 export default function GenerateBgTool({
@@ -18,13 +19,14 @@ export default function GenerateBgTool({
   onProcessingStart,
   onProcessingComplete,
   onProcessingError,
+  disabled = false,
 }: GenerateBgToolProps) {
   const [prompt, setPrompt] = useState('')
   const [quality, setQuality] = useState<'fast' | 'hq'>('fast')
 
   const handleGenerate = async () => {
     if (!prompt.trim()) {
-      onProcessingError('Please enter a prompt to generate a background')
+      onProcessingError('Please enter a background description')
       return
     }
 
@@ -33,7 +35,9 @@ export default function GenerateBgTool({
     try {
       const response = await fetch(uploadedImage)
       const blob = await response.blob()
-      const file = new File([blob], 'image.jpg', { type: blob.type || 'image/jpeg' })
+      const file = new File([blob], 'image.jpg', {
+        type: blob.type || 'image/jpeg',
+      })
 
       const resultBlob = await processImage(file, {
         mode: 'remove_background',
@@ -42,116 +46,134 @@ export default function GenerateBgTool({
         bgQuality: quality,
       })
 
-      const objectUrl = URL.createObjectURL(resultBlob)
-      onProcessingComplete(objectUrl)
+      onProcessingComplete(URL.createObjectURL(resultBlob))
     } catch (error) {
-      if (error instanceof Error) {
-        onProcessingError(error.message)
-      } else if (typeof error === 'string') {
-        onProcessingError(error)
-      } else {
-        onProcessingError(
-          'Background generation failed. The GPU queue may be busy. Please try again in a moment.'
-        )
-      }
+      onProcessingError(
+        error instanceof Error
+          ? error.message
+          : 'Background generation failed. Please try again.'
+      )
     }
   }
 
   return (
-    <div className="space-y-6">
-      <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+    <div className="space-y-6 animate-in">
+      <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4">
         <div className="flex items-start gap-3">
-          <span className="text-amber-400 font-semibold text-xs uppercase tracking-wide">
-            Experimental
-          </span>
-          <p className="text-sm text-[#9ca3af] flex-1">
-            This feature uses AI to generate backgrounds. Results may vary and
-            generation can take 30-60 seconds.
-          </p>
+          <Sparkles className="w-5 h-5 text-amber-400 mt-0.5" />
+          <div>
+            <p className="text-sm font-medium text-amber-400">
+              Experimental feature
+            </p>
+            <p className="text-xs text-[#9ca3af] leading-relaxed">
+              AI-generated backgrounds may vary. Generation can take up to 60
+              seconds depending on quality.
+            </p>
+          </div>
         </div>
       </div>
 
-      <div>
-        <label
-          htmlFor="bg-prompt"
-          className="block text-sm font-semibold text-[#e5e7eb] mb-2"
-        >
-          Describe Your Background
+      <div className="space-y-2">
+        <label className="text-sm font-semibold text-[#e5e7eb]">
+          Describe your background
         </label>
+
         <textarea
-          id="bg-prompt"
-          className="w-full px-4 py-3 bg-[#181b23] border border-[#2d3239] rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-none text-[#e5e7eb] placeholder:text-[#6b7280]"
-          placeholder="e.g., sunset over mountains, abstract blue gradient, modern office space"
+          className="
+            w-full rounded-xl border border-[#2d3239]
+            bg-[#181b23] px-4 py-3 text-sm text-[#e5e7eb]
+            placeholder:text-[#6b7280]
+            focus:border-primary-500 focus:ring-2 focus:ring-primary-500/40
+            transition resize-none
+          "
+          rows={3}
+          placeholder="e.g. cinematic sunset over mountains, soft studio lighting, futuristic city at night"
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
-          rows={3}
+          disabled={isProcessing || disabled}
         />
-        <p className="text-xs text-[#6b7280] mt-2">
-          Be specific for better results. Describe colors, mood, and style.
+
+        <p className="text-xs text-[#6b7280]">
+          Tip: include lighting, mood, and style for best results
         </p>
       </div>
 
-      <div>
-        <label className="block text-sm font-semibold text-[#e5e7eb] mb-3">
-          Generation Quality
-        </label>
-        <div className="space-y-3">
-          <label className="flex items-start gap-3 p-4 border border-[#2d3239] rounded-lg cursor-pointer hover:border-primary-500/50 hover:bg-[#252932] transition-colors">
-            <input
-              type="radio"
-              name="gen_quality"
-              value="fast"
-              checked={quality === 'fast'}
-              onChange={(e) => setQuality(e.target.value as 'fast' | 'hq')}
-              className="mt-1 accent-primary-600"
-            />
-            <div className="flex-1">
-              <div className="font-medium text-[#e5e7eb]">
-                Fast (Recommended)
-              </div>
-              <div className="text-sm text-[#9ca3af] mt-1">
-                Quick generation with good quality
-              </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <button
+          type="button"
+          onClick={() => setQuality('fast')}
+          disabled={isProcessing || disabled}
+          className={`
+            rounded-xl border p-4 text-left transition-all
+            ${
+              quality === 'fast'
+                ? 'border-primary-500 bg-primary-600/10'
+                : 'border-[#2d3239] hover:border-primary-500/40 hover:bg-[#252932]'
+            }
+          `}
+        >
+          <div className="flex gap-3">
+            <Zap className="w-5 h-5 text-primary-400" />
+            <div>
+              <p className="font-medium text-sm text-[#e5e7eb]">
+                Fast
+              </p>
+              <p className="text-xs text-[#9ca3af]">
+                Quick generation, great quality
+              </p>
             </div>
-          </label>
-          <label className="flex items-start gap-3 p-4 border border-[#2d3239] rounded-lg cursor-pointer hover:border-primary-500/50 hover:bg-[#252932] transition-colors">
-            <input
-              type="radio"
-              name="gen_quality"
-              value="hq"
-              checked={quality === 'hq'}
-              onChange={(e) => setQuality(e.target.value as 'fast' | 'hq')}
-              className="mt-1 accent-primary-600"
-            />
-            <div className="flex-1">
-              <div className="font-medium text-[#e5e7eb]">
-                High Quality (Slower)
-              </div>
-              <div className="text-sm text-[#9ca3af] mt-1">
-                Better detail, takes longer to generate
-              </div>
+          </div>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setQuality('hq')}
+          disabled={isProcessing || disabled}
+          className={`
+            rounded-xl border p-4 text-left transition-all
+            ${
+              quality === 'hq'
+                ? 'border-primary-500 bg-primary-600/10'
+                : 'border-[#2d3239] hover:border-primary-500/40 hover:bg-[#252932]'
+            }
+          `}
+        >
+          <div className="flex gap-3">
+            <Crown className="w-5 h-5 text-primary-400" />
+            <div>
+              <p className="font-medium text-sm text-[#e5e7eb]">
+                High Quality
+              </p>
+              <p className="text-xs text-[#9ca3af]">
+                Better detail, slower render
+              </p>
             </div>
-          </label>
-        </div>
+          </div>
+        </button>
       </div>
 
       <button
-        className="btn btn-primary w-full py-3 text-base font-semibold"
         onClick={handleGenerate}
-        disabled={isProcessing || !prompt.trim()}
+        disabled={isProcessing || disabled || !prompt.trim()}
+        className={`
+          relative w-full rounded-xl px-6 py-3.5 font-semibold text-sm
+          transition-all duration-300 overflow-hidden
+          ${
+            isProcessing || !prompt.trim()
+              ? 'bg-[#2d3239] text-[#6b7280] cursor-not-allowed opacity-60'
+              : 'bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-500 hover:to-primary-400'
+          }
+        `}
       >
-        {isProcessing ? 'Generating Background...' : 'Generate & Apply'}
-      </button>
+        <span className="relative z-10 flex items-center justify-center gap-2">
+          <Sparkles className={`w-4 h-4 ${isProcessing && 'animate-pulse'}`} />
+          {isProcessing ? 'Generating background…' : 'Generate & Apply'}
+        </span>
 
-      {isProcessing && (
-          <div className="flex flex-col items-center gap-3 p-6 bg-[#181b23] rounded-lg border border-[#2d3239]">
-            <div className="w-8 h-8 border-2 border-[#2d3239] border-t-primary-600 rounded-full animate-spin" />
-          <p className="text-sm text-[#9ca3af]">
-            Generating your background... This may take 30-60 seconds.
-          </p>
-        </div>
-      )}
+        {!isProcessing && prompt.trim() && (
+          <span className="absolute inset-0 bg-white/10 opacity-0 hover:opacity-100 transition-opacity" />
+        )}
+      </button>
     </div>
   )
 }
-

@@ -1,6 +1,7 @@
 'use client'
 
 import { processImage } from '@/lib/api'
+import { Sparkles, Wand2 } from 'lucide-react'
 
 interface RemoveBgToolProps {
   uploadedImage: string
@@ -8,6 +9,7 @@ interface RemoveBgToolProps {
   onProcessingStart: () => void
   onProcessingComplete: (result: string) => void
   onProcessingError: (error: Error | string) => void
+  disabled?: boolean
 }
 
 export default function RemoveBgTool({
@@ -16,6 +18,7 @@ export default function RemoveBgTool({
   onProcessingStart,
   onProcessingComplete,
   onProcessingError,
+  disabled = false,
 }: RemoveBgToolProps) {
   const handleProcess = async () => {
     onProcessingStart()
@@ -26,14 +29,12 @@ export default function RemoveBgTool({
       const file = new File([blob], 'image.jpg', { type: blob.type || 'image/jpeg' })
 
       const resultBlob = await processImage(file, { mode: 'remove_background' })
-
       const objectUrl = URL.createObjectURL(resultBlob)
+
       onProcessingComplete(objectUrl)
     } catch (error) {
       if (error instanceof Error) {
         onProcessingError(error.message)
-      } else if (typeof error === 'string') {
-        onProcessingError(error)
       } else {
         onProcessingError('Failed to remove background. Please try again.')
       }
@@ -41,31 +42,73 @@ export default function RemoveBgTool({
   }
 
   return (
-    <div className="space-y-6">
-      <div className="card p-6 space-y-6">
-        <div>
-          <p className="text-sm text-[#9ca3af] leading-relaxed">
-            Remove the background from your image instantly. The result will be
-            a transparent PNG perfect for compositing.
-          </p>
+    <section className="space-y-6 animate-in">
+      <div className="card p-6 md:p-8 space-y-6">
+        <div className="flex items-start gap-4">
+          <div className="w-12 h-12 rounded-xl bg-primary-600/15 text-primary-400 flex items-center justify-center">
+            <Wand2 className="w-6 h-6" />
+          </div>
+
+          <div className="space-y-1">
+            <h3 className="text-xl font-semibold tracking-tight">
+              Remove Background
+            </h3>
+            <p className="text-sm text-[#9ca3af] leading-relaxed">
+              Instantly isolate your subject with pixel-accurate edges. Export a clean transparent PNG ready for design or compositing.
+            </p>
+          </div>
         </div>
 
-        <button
-          className="btn btn-primary w-full py-3 text-base font-semibold"
-          onClick={handleProcess}
-          disabled={isProcessing}
-        >
-          {isProcessing ? 'Removing Background...' : 'Remove Background'}
-        </button>
+        <div className="pt-2">
+          <button
+            onClick={handleProcess}
+            disabled={isProcessing || disabled}
+            className={`
+              relative w-full overflow-hidden rounded-xl
+              px-6 py-3.5 font-semibold text-sm
+              transition-all duration-300
+              ${isProcessing
+                ? 'bg-primary-600/60 cursor-not-allowed'
+                : 'bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-500 hover:to-primary-400'
+              }
+            `}
+          >
+            <span className="relative z-10 flex items-center justify-center gap-2">
+              {isProcessing ? (
+                <>
+                  <Sparkles className="w-4 h-4 animate-pulse" />
+                  Removing background…
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4" />
+                  Remove Background
+                </>
+              )}
+            </span>
 
-        {isProcessing && (
-          <div className="flex flex-col items-center gap-3 p-6 bg-[#181b23] rounded-lg border border-[#2d3239]">
-            <div className="w-8 h-8 border-2 border-[#2d3239] border-t-primary-600 rounded-full animate-spin" />
-            <p className="text-sm text-[#9ca3af]">Processing your image...</p>
-          </div>
-        )}
+            {!isProcessing && (
+              <span className="absolute inset-0 bg-white/10 opacity-0 hover:opacity-100 transition-opacity" />
+            )}
+          </button>
+        </div>
       </div>
-    </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+        {[
+          { title: 'Transparent PNG', desc: 'Perfect cut-outs every time' },
+          { title: 'AI-Powered', desc: 'Handles hair & fine details' },
+          { title: 'Fast', desc: 'Results in seconds' },
+        ].map((item) => (
+          <div
+            key={item.title}
+            className="card p-4 text-center space-y-1"
+          >
+            <p className="font-medium">{item.title}</p>
+            <p className="text-xs text-[#9ca3af]">{item.desc}</p>
+          </div>
+        ))}
+      </div>
+    </section>
   )
 }
-
