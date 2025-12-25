@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { processImage } from '@/lib/api'
+import { Sparkles, Zap, Maximize2 } from 'lucide-react'
 
 interface EnhanceToolProps {
   uploadedImage: string
@@ -9,6 +10,7 @@ interface EnhanceToolProps {
   onProcessingStart: () => void
   onProcessingComplete: (result: string) => void
   onProcessingError: (error: Error | string) => void
+  disabled?: boolean
 }
 
 export default function EnhanceTool({
@@ -17,6 +19,7 @@ export default function EnhanceTool({
   onProcessingStart,
   onProcessingComplete,
   onProcessingError,
+  disabled = false,
 }: EnhanceToolProps) {
   const [quality, setQuality] = useState<'fast' | 'hq'>('fast')
 
@@ -30,80 +33,141 @@ export default function EnhanceTool({
 
       const scale = quality === 'fast' ? 2 : 4
       const mode = scale === 2 ? 'enhance_2x' : 'enhance_4x'
-      const resultBlob = await processImage(file, { mode })
 
+      const resultBlob = await processImage(file, { mode })
       const objectUrl = URL.createObjectURL(resultBlob)
+
       onProcessingComplete(objectUrl)
     } catch (error) {
       if (error instanceof Error) {
         onProcessingError(error.message)
-      } else if (typeof error === 'string') {
-        onProcessingError(error)
       } else {
-        onProcessingError('Failed to enhance image. Please try again or use a different image.')
+        onProcessingError('Failed to enhance image. Please try again.')
       }
     }
   }
 
   return (
-    <div className="space-y-6">
-      <div className="card p-6 space-y-6">
-        <div>
-          <label className="block text-sm font-semibold text-[#e5e7eb] mb-3">
-            Enhancement Quality
-          </label>
-          <div className="space-y-3">
-            <label className="flex items-start gap-3 p-4 border border-[#2d3239] rounded-lg cursor-pointer hover:border-primary-500/50 hover:bg-[#252932] transition-colors">
-              <input
-                type="radio"
-                name="quality"
-                value="fast"
-                checked={quality === 'fast'}
-                onChange={(e) => setQuality(e.target.value as 'fast' | 'hq')}
-                className="mt-1 accent-primary-600"
-              />
-              <div className="flex-1">
-                <div className="font-medium text-[#e5e7eb]">Fast (2x)</div>
-                <div className="text-sm text-[#9ca3af] mt-1">
-                  Quick enhancement with balanced quality
-                </div>
-              </div>
-            </label>
-            <label className="flex items-start gap-3 p-4 border border-[#2d3239] rounded-lg cursor-pointer hover:border-primary-500/50 hover:bg-[#252932] transition-colors">
-              <input
-                type="radio"
-                name="quality"
-                value="hq"
-                checked={quality === 'hq'}
-                onChange={(e) => setQuality(e.target.value as 'fast' | 'hq')}
-                className="mt-1 accent-primary-600"
-              />
-              <div className="flex-1">
-                <div className="font-medium text-[#e5e7eb]">High Quality (4x)</div>
-                <div className="text-sm text-[#9ca3af] mt-1">
-                  Maximum detail, takes longer to process
-                </div>
-              </div>
-            </label>
+    <section className="space-y-6 animate-in">
+      <div className="card p-6 md:p-8 space-y-6">
+        <div className="flex items-start gap-4">
+          <div className="w-12 h-12 rounded-xl bg-primary-600/15 text-primary-400 flex items-center justify-center">
+            <Maximize2 className="w-6 h-6" />
+          </div>
+
+          <div className="space-y-1">
+            <h3 className="text-xl font-semibold tracking-tight">
+              Enhance Image
+            </h3>
+            <p className="text-sm text-[#9ca3af] leading-relaxed">
+              Upscale your image with AI-powered super-resolution. Sharper details,
+              cleaner edges, and higher clarity - no artifacts.
+            </p>
           </div>
         </div>
 
-        <button
-          className="btn btn-primary w-full py-3 text-base font-semibold"
-          onClick={handleProcess}
-          disabled={isProcessing}
-        >
-          {isProcessing ? 'Enhancing...' : 'Enhance Image'}
-        </button>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <button
+            type="button"
+            onClick={() => setQuality('fast')}
+            disabled={isProcessing || disabled}
+            className={`
+              relative rounded-xl border p-4 text-left transition-all
+              ${quality === 'fast'
+                ? 'border-primary-500 bg-primary-600/10'
+                : 'border-[#2d3239] hover:border-primary-500/40 hover:bg-[#252932]'
+              }
+            `}
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg bg-primary-600/15 text-primary-400 flex items-center justify-center">
+                <Zap className="w-4.5 h-4.5" />
+              </div>
+              <div>
+                <p className="font-medium text-sm">Fast · 2x</p>
+                <p className="text-xs text-[#9ca3af]">
+                  Quick enhancement with balanced quality
+                </p>
+              </div>
+            </div>
+          </button>
 
-        {isProcessing && (
-          <div className="flex flex-col items-center gap-3 p-6 bg-[#181b23] rounded-lg border border-[#2d3239]">
-            <div className="w-8 h-8 border-2 border-[#2d3239] border-t-primary-600 rounded-full animate-spin" />
-            <p className="text-sm text-[#9ca3af]">This may take a moment...</p>
-          </div>
-        )}
+          <button
+            type="button"
+            onClick={() => setQuality('hq')}
+            disabled={isProcessing || disabled}
+            className={`
+              relative rounded-xl border p-4 text-left transition-all
+              ${quality === 'hq'
+                ? 'border-primary-500 bg-primary-600/10'
+                : 'border-[#2d3239] hover:border-primary-500/40 hover:bg-[#252932]'
+              }
+            `}
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg bg-primary-600/15 text-primary-400 flex items-center justify-center">
+                <Sparkles className="w-4.5 h-4.5" />
+              </div>
+              <div>
+                <p className="font-medium text-sm">High Quality · 4x</p>
+                <p className="text-xs text-[#9ca3af]">
+                  Maximum detail, slower processing
+                </p>
+              </div>
+            </div>
+          </button>
+        </div>
+
+        <div className="pt-2">
+          <button
+            onClick={handleProcess}
+            disabled={isProcessing || disabled}
+            className={`
+              relative w-full overflow-hidden rounded-xl
+              px-6 py-3.5 font-semibold text-sm
+              transition-all duration-300
+              ${isProcessing
+                ? 'bg-primary-600/60 cursor-not-allowed'
+                : 'bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-500 hover:to-primary-400'
+              }
+            `}
+          >
+            <span className="relative z-10 flex items-center justify-center gap-2">
+              {isProcessing ? (
+                <>
+                  <Sparkles className="w-4 h-4 animate-pulse" />
+                  Enhancing image…
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4" />
+                  Enhance Image
+                </>
+              )}
+            </span>
+
+            {!isProcessing && (
+              <span className="absolute inset-0 bg-white/10 opacity-0 hover:opacity-100 transition-opacity" />
+            )}
+          </button>
+        </div>
       </div>
-    </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+        {[
+          { title: 'Super-Resolution', desc: 'AI upscaling without blur' },
+          { title: 'Detail-Preserving', desc: 'Sharp edges & textures' },
+          { title: 'Flexible', desc: 'Choose speed or quality' },
+        ].map((item) => (
+          <div
+            key={item.title}
+            className="card p-4 text-center space-y-1"
+          >
+            <p className="font-medium">{item.title}</p>
+            <p className="text-xs text-[#9ca3af]">{item.desc}</p>
+          </div>
+        ))}
+      </div>
+    </section>
   )
 }
-

@@ -11,7 +11,8 @@ ENV/
 .venv/
 tmp/
 
-frontend/
+frontend-old/
+aurora-ai/
 
 data/input/*
 data/output/*
@@ -34,3 +35,5 @@ third_party/InSPyReNet/
 
 .DS_Store
 Thumbs.db
+
+node_modules/
