@@ -1,7 +1,7 @@
 # Model: 2x BHI Small DRCT-XL (Balanced Upscaling)
 
 ## Purpose
-This model is used by **Aurora AI - Image Enhancement Studio** to perform **fast, balanced 2x image upscaling**.
+This model is used by **Aurora AI** to perform **fast, balanced 2x image upscaling**.
 
 It is designed to improve image clarity while preserving realism and minimizing artifacts, making it suitable for:
 - Web images

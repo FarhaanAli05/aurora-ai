@@ -11,7 +11,7 @@ from backend.app.services import inference as aurora_inference
 
 app = FastAPI(
     title="Aurora AI",
-    description="Image Enhancement Studio - Background removal and AI upscaling.",
+    description="AI Image Editing Studio - Background removal and AI upscaling.",
     version="0.1.0",
 )
 
@@ -33,7 +33,7 @@ HTML_FORM = """
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Aurora AI - Image Enhancement Studio</title>
+  <title>Aurora AI</title>
   <style>
     body { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; margin: 2rem; }
     form { display: flex; flex-direction: column; gap: 1rem; max-width: 480px; }
@@ -90,7 +90,7 @@ HTML_FORM = """
   </script>
 </head>
 <body>
-  <h1>Aurora AI - Image Enhancement Studio</h1>
+  <h1>Aurora AI</h1>
   <form action="/process" method="post" enctype="multipart/form-data" onsubmit="onSubmitForm()">
     <div class="form-group">
       <label>Image (required)</label>

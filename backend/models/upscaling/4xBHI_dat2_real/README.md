@@ -1,7 +1,7 @@
 # Model: 4x BHI DAT2-Real (High-Detail Upscaling)
 
 ## Purpose
-This model is used by **Aurora AI - Image Enhancement Studio** for **high-quality 4x image upscaling**.
+This model is used by **Aurora AI** for **high-quality 4x image upscaling**.
 
 It is optimized for **real-world images** and handles:
 - Lens blur

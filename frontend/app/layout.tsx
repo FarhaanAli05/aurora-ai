@@ -3,7 +3,7 @@ import { GeistSans } from 'geist/font/sans'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Aurora AI - Image Enhancement Studio',
+  title: 'Aurora AI',
   description: 'Professional AI-powered image editing tools',
 }
 

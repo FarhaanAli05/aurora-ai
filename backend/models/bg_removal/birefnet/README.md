@@ -1,7 +1,7 @@
 # Model: BiRefNet (Background Removal)
 
 ## Purpose
-This model is used by **Aurora AI - Image Enhancement Studio** for **AI-powered background removal**.
+This model is used by **Aurora AI** for **AI-powered background removal**.
 
 It generates a high-quality alpha matte, allowing:
 - Transparent PNG output
