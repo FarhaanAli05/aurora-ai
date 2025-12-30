@@ -232,31 +232,23 @@ export default function MainEditorPanel({
   }
 
   return (
-    <main className="relative flex-1 flex flex-col overflow-hidden bg-[#0f1115]">
-      {/* Ambient editor glow */}
-      {/* <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div
-          className="
-            absolute -top-48 left-1/2 -translate-x-1/2
-            w-[900px] h-[900px]
-            bg-gradient-to-br
-            from-cyan-500/10
-            via-blue-500/5
-            to-fuchsia-500/10
-            blur-[140px]
-          "
-        />
-      </div> */}
-      <div className="flex-1 overflow-y-auto" style={{ padding: '1rem' }}>
-        <div className="relative max-w-3xl mx-auto space-y-4">
-          {currentImage && originalImage && selectedTool && (
-            <div className="mb-2">
-              <h2 className="text-lg font-semibold text-[#e5e7eb]">{getToolName()}</h2>
-            </div>
-          )}
+    <main className="relative flex-1 flex flex-col overflow-hidden bg-[#0b0f14]">
+      <div className="flex items-center justify-between border-b border-white/10 bg-[#0c1118]/80 px-4 py-3">
+        <div className="flex flex-col">
+          <span className="text-[11px] uppercase tracking-[0.2em] text-white/50">
+            Active tool
+          </span>
+          <span className="text-lg font-semibold text-white">
+            {getToolName() || 'Choose a tool'}
+          </span>
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-4 md:p-6">
+        <div className="relative max-w-4xl mx-auto space-y-4">
           {currentImage && originalImage && (
-            <div className="mb-3 card p-4">
-              <div className="flex items-center justify-between mb-2">
+            <div className="mb-3 card p-4 md:p-5">
+              <div className="flex items-center justify-between mb-3">
                 {!isProcessing && currentImage !== originalImage && (
                   <button
                     className="btn btn-secondary text-sm flex items-center gap-1.5"
@@ -271,9 +263,9 @@ export default function MainEditorPanel({
               <div
                 className="
                   relative mb-4
-                  rounded-3xl
+                  rounded-[26px]
                   border border-white/10
-                  bg-[#0b0d12]
+                  bg-[#0b0f16]
                   overflow-hidden
                   transition-all
                 "
@@ -281,18 +273,18 @@ export default function MainEditorPanel({
                   e.preventDefault()
                   e.stopPropagation()
                   if (!isProcessing) {
-                    e.currentTarget.classList.add('border-primary-500', 'bg-primary-500/5')
+                    e.currentTarget.classList.add('border-primary-400/60', 'bg-primary-500/5')
                   }
                 }}
                 onDragLeave={(e) => {
                   e.preventDefault()
                   e.stopPropagation()
-                  e.currentTarget.classList.remove('border-primary-500', 'bg-primary-500/5')
+                  e.currentTarget.classList.remove('border-primary-400/60', 'bg-primary-500/5')
                 }}
                 onDrop={(e) => {
                   e.preventDefault()
                   e.stopPropagation()
-                  e.currentTarget.classList.remove('border-primary-500', 'bg-primary-500/5')
+                  e.currentTarget.classList.remove('border-primary-400/60', 'bg-primary-500/5')
                   if (!isProcessing && e.dataTransfer.files && e.dataTransfer.files[0]) {
                     const file = e.dataTransfer.files[0]
                     if (file.type.startsWith('image/')) {
@@ -330,13 +322,13 @@ export default function MainEditorPanel({
                   </div>
                 ) : isCompareMode && currentImage !== originalImage ? (
                   <div className="flex items-center justify-center p-8">
-                    <div className="w-8 h-8 border-2 border-[#2d3239] border-t-primary-600 rounded-full animate-spin" />
+                    <div className="w-8 h-8 border-2 border-white/10 border-t-primary-500 rounded-full animate-spin" />
                   </div>
                 ) : (
                   <div className="
                     rounded-2xl overflow-hidden
-                    bg-[#0b0d12]
-                    shadow-[0_20px_60px_rgba(0,0,0,0.45)]
+                    bg-[#0b0f16]
+                    shadow-[0_24px_70px_rgba(0,0,0,0.55)]
                     border border-white/5
                   ">
                     <img
@@ -344,7 +336,7 @@ export default function MainEditorPanel({
                       alt={isProcessing ? 'Processing' : 'Current image'}
                       className="w-full h-auto"
                     />
-                    <div className="absolute inset-0 rounded-3xl ring-1 ring-white/5 pointer-events-none" />
+                    <div className="absolute inset-0 rounded-[26px] ring-1 ring-white/5 pointer-events-none" />
                     {isProcessing && (
                       <div className="
                         absolute inset-0
@@ -353,14 +345,14 @@ export default function MainEditorPanel({
                         backdrop-blur-sm
                         flex items-center justify-center
                         pointer-events-none
-                      ">                    
+                      ">
                         <div className="flex flex-col items-center gap-3">
                           <div className="text-white font-semibold text-base">Processing...</div>
                           <div className="flex gap-1">
                             {[0, 1, 2].map((i) => (
                               <div
                                 key={i}
-                                className="w-2 h-2 bg-primary-400 rounded-full animate-pulse"
+                                className="w-2 h-2 bg-primary-300 rounded-full animate-pulse"
                                 style={{
                                   animationDelay: `${i * 0.2}s`,
                                   animationDuration: '1s',

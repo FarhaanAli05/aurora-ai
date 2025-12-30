@@ -84,7 +84,7 @@ export default function EnhanceTool({
                 <Zap className="w-4.5 h-4.5" />
               </div>
               <div>
-                <p className="font-medium text-sm">Fast · 2x</p>
+                <p className="font-medium text-sm">Fast 2x</p>
                 <p className="text-xs text-[#9ca3af]">
                   Quick enhancement with balanced quality
                 </p>
@@ -109,7 +109,7 @@ export default function EnhanceTool({
                 <Sparkles className="w-4.5 h-4.5" />
               </div>
               <div>
-                <p className="font-medium text-sm">High Quality · 4x</p>
+                <p className="font-medium text-sm">High Quality 4x</p>
                 <p className="text-xs text-[#9ca3af]">
                   Maximum detail, slower processing
                 </p>
@@ -136,7 +136,7 @@ export default function EnhanceTool({
               {isProcessing ? (
                 <>
                   <Sparkles className="w-4 h-4 animate-pulse" />
-                  Enhancing image…
+                  Enhancing image...
                 </>
               ) : (
                 <>

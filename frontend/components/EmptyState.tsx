@@ -102,7 +102,7 @@ export default function EmptyState({
           </div>
 
           <p className="mt-4 text-xs text-[#6b7280]">
-            Drag & drop or click · JPG, PNG, WEBP · up to 10MB
+            Drag & drop or click - JPG, PNG, WEBP - up to 10MB
           </p>
 
           <input

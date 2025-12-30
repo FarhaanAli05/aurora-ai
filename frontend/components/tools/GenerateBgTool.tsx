@@ -60,9 +60,9 @@ export default function GenerateBgTool({
     <div className="space-y-6 animate-in">
       <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4">
         <div className="flex items-start gap-3">
-          <Sparkles className="w-5 h-5 text-amber-400 mt-0.5" />
+          <Sparkles className="w-5 h-5 text-amber-300 mt-0.5" />
           <div>
-            <p className="text-sm font-medium text-amber-400">
+            <p className="text-sm font-medium text-amber-300">
               Experimental feature
             </p>
             <p className="text-xs text-[#9ca3af] leading-relaxed">
@@ -167,7 +167,7 @@ export default function GenerateBgTool({
       >
         <span className="relative z-10 flex items-center justify-center gap-2">
           <Sparkles className={`w-4 h-4 ${isProcessing && 'animate-pulse'}`} />
-          {isProcessing ? 'Generating background…' : 'Generate & Apply'}
+          {isProcessing ? 'Generating background...' : 'Generate & Apply'}
         </span>
 
         {!isProcessing && prompt.trim() && (

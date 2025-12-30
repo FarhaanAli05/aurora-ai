@@ -77,7 +77,7 @@ export default function RemoveBgTool({
               {isProcessing ? (
                 <>
                   <Sparkles className="w-4 h-4 animate-pulse" />
-                  Removing background…
+                  Removing background...
                 </>
               ) : (
                 <>

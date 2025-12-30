@@ -93,7 +93,7 @@ export default function ReplaceBgTool({
     return (
       <div className="card p-4 flex items-center gap-2 text-sm text-[#9ca3af]">
         <div className="w-4 h-4 border-2 border-[#2d3239] border-t-primary-600 rounded-full animate-spin" />
-        Checking image transparency…
+        Checking image transparency...
       </div>
     )
   }
@@ -101,7 +101,7 @@ export default function ReplaceBgTool({
   if (imageHasTransparency === false) {
     return (
       <div className="card p-4">
-        <p className="text-sm text-amber-400 font-medium mb-1">
+        <p className="text-sm text-primary-300 font-medium mb-1">
           Background removal required
         </p>
         <p className="text-xs text-[#9ca3af]">
@@ -219,7 +219,7 @@ export default function ReplaceBgTool({
                 }
               `}
             >
-              {isProcessing ? 'Processing…' : 'Replace Background'}
+              {isProcessing ? 'Processing...' : 'Replace Background'}
             </button>
           </>
         )}
