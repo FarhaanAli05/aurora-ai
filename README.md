@@ -1,3 +1,13 @@
+---
+title: Aurora AI
+emoji: 🌌
+colorFrom: purple
+colorTo: pink
+sdk: docker
+app_port: 7860
+pinned: false
+---
+
 # Aurora AI
 
 Aurora AI is a modern, web-based AI image editing studio for background removal, image enhancement, and background replacement. The project is built with a clean separation between a Next.js frontend and a FastAPI-based ML inference backend.
