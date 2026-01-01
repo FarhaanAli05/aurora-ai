@@ -362,7 +362,7 @@ def _load_flux_pipeline(quality: str = "fast", force_cpu: bool = False):
             "Please check your internet connection and try again."
         ) from e
 
-def generate_background(prompt: str, quality: str = "fast", provider_pref: str = "auto") -> tuple[Image.Image, dict]:
+def generate_background(prompt: str, quality: str = "fast", provider_pref: str = "lcm") -> tuple[Image.Image, dict]:
     if not prompt or not prompt.strip():
         raise ValueError("Prompt cannot be empty")
 

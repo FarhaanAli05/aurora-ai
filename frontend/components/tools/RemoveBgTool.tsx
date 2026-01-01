@@ -50,9 +50,12 @@ export default function RemoveBgTool({
           </div>
 
           <div className="space-y-1">
-            <h3 className="text-xl font-semibold tracking-tight">
-              Remove Background
-            </h3>
+            <div className="flex items-center gap-3">
+              <h3 className="text-xl font-semibold tracking-tight">
+                Remove Background
+              </h3>
+              <span className="text-xs text-white/50">&lt;1 min</span>
+            </div>
             <p className="text-sm text-[#9ca3af] leading-relaxed">
               Instantly isolate your subject with pixel-accurate edges. Export a clean transparent PNG ready for design or compositing.
             </p>

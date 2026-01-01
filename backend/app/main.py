@@ -251,7 +251,7 @@ async def process_image(
     bg_type: str = Form("upload"),
     bg_prompt: str = Form(""),
     bg_quality: str = Form("fast"),
-    bg_provider: str = Form("auto"),
+    bg_provider: str = Form("lcm"),
 ):
     try:
         project_root = Path(__file__).resolve().parents[1]
@@ -276,9 +276,9 @@ async def process_image(
                     bg_file.write(bg_contents)
         elif bg_type == "generate" and bg_prompt and bg_prompt.strip():
             try:
-                provider_pref = bg_provider.lower() if bg_provider else "auto"
+                provider_pref = bg_provider.lower() if bg_provider else "lcm"
                 if provider_pref not in ("auto", "openvino", "lcm"):
-                    provider_pref = "auto"
+                    provider_pref = "lcm"
                 
                 print(f"Background generation requested with provider preference: {provider_pref}")
                 generated_bg, provider_info_result = aurora_inference.generate_background(

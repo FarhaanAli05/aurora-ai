@@ -14,10 +14,8 @@ export interface ProcessImageOptions {
   bgType?: 'upload' | 'generate'
   bgPrompt?: string
   bgQuality?: 'fast' | 'hq'
-  bgProvider?: 'auto' | 'openvino' | 'lcm'
   timeout?: number
   onNotice?: (message: string) => void
-  onProviderInfo?: (info: { provider: string; etaText: string; elapsedSeconds?: number }) => void
 }
 
 function dataURLtoBlob(dataURL: string): Blob {
@@ -109,9 +107,6 @@ export async function processImage(
     formData.append('bg_type', 'generate')
     formData.append('bg_prompt', options.bgPrompt)
     formData.append('bg_quality', options.bgQuality || 'fast')
-    if (options.bgProvider) {
-      formData.append('bg_provider', options.bgProvider)
-    }
   }
 
   const timeout = options.timeout ?? getDefaultTimeout(options.mode, options.bgType)
@@ -132,17 +127,6 @@ export async function processImage(
     const notice = response.headers.get('x-aurora-notice')
     if (notice && options.onNotice) {
       options.onNotice(notice)
-    }
-
-    const provider = response.headers.get('x-aurora-provider')
-    const etaText = response.headers.get('x-aurora-eta')
-    const elapsedSeconds = response.headers.get('x-aurora-elapsed')
-    if (provider && etaText && options.onProviderInfo) {
-      options.onProviderInfo({
-        provider,
-        etaText,
-        elapsedSeconds: elapsedSeconds ? parseFloat(elapsedSeconds) : undefined,
-      })
     }
 
     if (!response.ok) {

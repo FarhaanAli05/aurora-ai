@@ -56,9 +56,12 @@ export default function EnhanceTool({
           </div>
 
           <div className="space-y-1">
-            <h3 className="text-xl font-semibold tracking-tight">
-              Enhance Image
-            </h3>
+            <div className="flex items-center gap-3">
+              <h3 className="text-xl font-semibold tracking-tight">
+                Enhance Image
+              </h3>
+              <span className="text-xs text-white/50">~30 sec</span>
+            </div>
             <p className="text-sm text-[#9ca3af] leading-relaxed">
               Upscale your image with AI-powered super-resolution. Sharper details,
               cleaner edges, and higher clarity - no artifacts.

@@ -125,39 +125,23 @@ _lcm_provider = LCMProvider()
 _log_cpu_info()
 
 
-def generate_background(prompt: str, quality: str = "fast", provider_pref: str = "auto") -> Tuple[Image.Image, Dict[str, Any]]:
+def generate_background(prompt: str, quality: str = "fast", provider_pref: str = "lcm") -> Tuple[Image.Image, Dict[str, Any]]:
     if not prompt or not prompt.strip():
         raise ValueError("Prompt cannot be empty")
 
     total_start = time.monotonic()
     
-    provider_pref = provider_pref.lower() if provider_pref else "auto"
+    provider_pref = provider_pref.lower() if provider_pref else "lcm"
     if provider_pref not in ("auto", "openvino", "lcm"):
-        provider_pref = "auto"
+        provider_pref = "lcm"
     
-    if provider_pref == "lcm":
-        print("Using provider: LCM (CPU) [forced]")
-        lcm_start = time.monotonic()
-        image = _lcm_provider.generate(prompt)
-        lcm_elapsed = time.monotonic() - lcm_start
-        total_elapsed = time.monotonic() - total_start
-        print(f"✓ LCM generation successful ({lcm_elapsed:.2f}s)")
-        
-        return image, {
-            "provider": LCM_PROVIDER,
-            "elapsedSeconds": round(total_elapsed, 2),
-            "message": "Using LCM (CPU)",
-            "etaText": "Typically around 1 minute",
-        }
+    if provider_pref == "auto":
+        provider_pref = "lcm"
     
-    if provider_pref in ("openvino", "auto"):
-        print(f"Trying OpenVINO... [{'forced' if provider_pref == 'openvino' else 'auto'}]")
+    if provider_pref == "openvino":
+        print("Trying OpenVINO... [forced]")
         if not _openvino_importable():
-            print("OpenVINO not installed in this environment (optimum.intel missing).")
-            if provider_pref == "openvino":
-                print("OpenVINO requested but not available. Falling back to LCM.")
-            else:
-                print("Falling back to LCM...")
+            print("OpenVINO not installed in this environment (optimum.intel missing). Falling back to LCM.")
         else:
             ov_start = time.monotonic()
             try:
@@ -177,11 +161,8 @@ def generate_background(prompt: str, quality: str = "fast", provider_pref: str =
                 error_type = type(exc).__name__
                 error_msg = str(exc)
                 print(f"OpenVINO failed: {error_type}: {error_msg} (after {elapsed:.2f}s)")
-                if provider_pref == "openvino":
-                    print("OpenVINO requested but failed. Falling back to LCM.")
-                else:
-                    print("Falling back to LCM...")
-
+                print("OpenVINO requested but failed. Falling back to LCM.")
+    
     print("Using provider: LCM (CPU)")
     lcm_start = time.monotonic()
     image = _lcm_provider.generate(prompt)
@@ -202,5 +183,5 @@ def smoke_test_background_provider() -> dict:
     
     return {
         "openvino_importable": openvino_importable,
-        "default_provider": OPENVINO_PROVIDER if openvino_importable else LCM_PROVIDER,
+        "default_provider": LCM_PROVIDER,
     }
