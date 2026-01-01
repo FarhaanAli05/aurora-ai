@@ -79,15 +79,3 @@ npm run dev
 ```
 
 The frontend will be available at `http://localhost:3000`.
-
-## Deployment Notes
-
-Aurora AI is designed to be compatible with environments such as **Hugging Face Spaces**, including:
-- CPU-only deployments
-- ZeroGPU environments
-- Graceful fallback when GPU acceleration is unavailable
-Model weights are not committed to the repository.
-
-## Status
-
-Aurora AI is an actively developed project focused on refining user experience, improving inference performance, and expanding AI-powered editing capabilities.
