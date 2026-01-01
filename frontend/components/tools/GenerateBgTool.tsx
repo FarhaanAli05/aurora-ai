@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { processImage } from '@/lib/api'
-import { Sparkles, Zap, Crown } from 'lucide-react'
+import { Sparkles } from 'lucide-react'
 
 interface GenerateBgToolProps {
   uploadedImage: string
@@ -10,8 +10,13 @@ interface GenerateBgToolProps {
   onProcessingStart: () => void
   onProcessingComplete: (result: string) => void
   onProcessingError: (error: Error | string) => void
+  onInfo?: (message: string) => void
   disabled?: boolean
 }
+
+type BgProvider = 'auto' | 'openvino' | 'lcm'
+
+const PROVIDER_STORAGE_KEY = 'aurora_bg_provider_pref'
 
 export default function GenerateBgTool({
   uploadedImage,
@@ -19,10 +24,24 @@ export default function GenerateBgTool({
   onProcessingStart,
   onProcessingComplete,
   onProcessingError,
+  onInfo,
   disabled = false,
 }: GenerateBgToolProps) {
   const [prompt, setPrompt] = useState('')
-  const [quality, setQuality] = useState<'fast' | 'hq'>('fast')
+  const [etaText, setEtaText] = useState<string | null>(null)
+  const [bgProvider, setBgProvider] = useState<BgProvider>('auto')
+
+  useEffect(() => {
+    const stored = localStorage.getItem(PROVIDER_STORAGE_KEY)
+    if (stored === 'auto' || stored === 'openvino' || stored === 'lcm') {
+      setBgProvider(stored)
+    }
+  }, [])
+
+  const handleProviderChange = (provider: BgProvider) => {
+    setBgProvider(provider)
+    localStorage.setItem(PROVIDER_STORAGE_KEY, provider)
+  }
 
   const handleGenerate = async () => {
     if (!prompt.trim()) {
@@ -31,6 +50,7 @@ export default function GenerateBgTool({
     }
 
     onProcessingStart()
+    setEtaText('Typically under 1 minute')
 
     try {
       const response = await fetch(uploadedImage)
@@ -43,11 +63,18 @@ export default function GenerateBgTool({
         mode: 'remove_background',
         bgType: 'generate',
         bgPrompt: prompt.trim(),
-        bgQuality: quality,
+        bgQuality: 'fast',
+        bgProvider: bgProvider,
+        onNotice: onInfo,
+        onProviderInfo: (info) => {
+          setEtaText(info.etaText)
+        },
       })
 
       onProcessingComplete(URL.createObjectURL(resultBlob))
+      setEtaText(null)
     } catch (error) {
+      setEtaText(null)
       onProcessingError(
         error instanceof Error
           ? error.message
@@ -98,58 +125,65 @@ export default function GenerateBgTool({
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <button
-          type="button"
-          onClick={() => setQuality('fast')}
-          disabled={isProcessing || disabled}
-          className={`
-            rounded-xl border p-4 text-left transition-all
-            ${
-              quality === 'fast'
+      <div className="space-y-3">
+        <label className="text-sm font-semibold text-[#e5e7eb]">
+          Provider
+        </label>
+        <div className="grid grid-cols-3 gap-2">
+          <button
+            onClick={() => handleProviderChange('auto')}
+            disabled={isProcessing || disabled}
+            className={`
+              rounded-lg border px-3 py-2.5 text-left transition-all text-xs
+              ${bgProvider === 'auto'
                 ? 'border-primary-500 bg-primary-600/10'
                 : 'border-[#2d3239] hover:border-primary-500/40 hover:bg-[#252932]'
-            }
-          `}
-        >
-          <div className="flex gap-3">
-            <Zap className="w-5 h-5 text-primary-400" />
-            <div>
-              <p className="font-medium text-sm text-[#e5e7eb]">
-                Fast
-              </p>
-              <p className="text-xs text-[#9ca3af]">
-                Quick generation, great quality
-              </p>
-            </div>
-          </div>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setQuality('hq')}
-          disabled={isProcessing || disabled}
-          className={`
-            rounded-xl border p-4 text-left transition-all
-            ${
-              quality === 'hq'
+              }
+              ${isProcessing || disabled ? 'opacity-60 cursor-not-allowed' : ''}
+            `}
+          >
+            <p className="font-medium">Auto</p>
+            <p className="text-[10px] text-[#9ca3af] mt-0.5">Recommended</p>
+          </button>
+          <button
+            onClick={() => handleProviderChange('openvino')}
+            disabled={isProcessing || disabled}
+            className={`
+              rounded-lg border px-3 py-2.5 text-left transition-all text-xs
+              ${bgProvider === 'openvino'
                 ? 'border-primary-500 bg-primary-600/10'
                 : 'border-[#2d3239] hover:border-primary-500/40 hover:bg-[#252932]'
-            }
-          `}
-        >
-          <div className="flex gap-3">
-            <Crown className="w-5 h-5 text-primary-400" />
-            <div>
-              <p className="font-medium text-sm text-[#e5e7eb]">
-                High Quality
-              </p>
-              <p className="text-xs text-[#9ca3af]">
-                Better detail, slower render
-              </p>
-            </div>
-          </div>
-        </button>
+              }
+              ${isProcessing || disabled ? 'opacity-60 cursor-not-allowed' : ''}
+            `}
+          >
+            <p className="font-medium">OpenVINO</p>
+            <p className="text-[10px] text-[#9ca3af] mt-0.5">CPU optimized</p>
+          </button>
+          <button
+            onClick={() => handleProviderChange('lcm')}
+            disabled={isProcessing || disabled}
+            className={`
+              rounded-lg border px-3 py-2.5 text-left transition-all text-xs
+              ${bgProvider === 'lcm'
+                ? 'border-primary-500 bg-primary-600/10'
+                : 'border-[#2d3239] hover:border-primary-500/40 hover:bg-[#252932]'
+              }
+              ${isProcessing || disabled ? 'opacity-60 cursor-not-allowed' : ''}
+            `}
+          >
+            <p className="font-medium">LCM</p>
+            <p className="text-[10px] text-[#9ca3af] mt-0.5">Universal</p>
+          </button>
+        </div>
+        <div className="rounded-lg border border-[#2d3239] bg-[#181b23] p-3">
+          <p className="text-xs text-[#9ca3af] leading-relaxed">
+            {bgProvider === 'auto' && 'Chooses the best available provider'}
+            {bgProvider === 'openvino' && 'Optimized on some CPUs; may be faster after warm-up'}
+            {bgProvider === 'lcm' && 'Universal CPU; often more consistent'}
+            <span className="block mt-1 text-[#6b7280]">Same output quality</span>
+          </p>
+        </div>
       </div>
 
       <button
@@ -165,9 +199,16 @@ export default function GenerateBgTool({
           }
         `}
       >
-        <span className="relative z-10 flex items-center justify-center gap-2">
-          <Sparkles className={`w-4 h-4 ${isProcessing && 'animate-pulse'}`} />
-          {isProcessing ? 'Generating background...' : 'Generate & Apply'}
+        <span className="relative z-10 flex flex-col items-center gap-1">
+          <span className="flex items-center gap-2">
+            <Sparkles className={`w-4 h-4 ${isProcessing && 'animate-pulse'}`} />
+            {isProcessing ? 'Generating background...' : 'Generate & Apply'}
+          </span>
+          {isProcessing && etaText && (
+            <span className="text-xs font-normal opacity-80">
+              {etaText}
+            </span>
+          )}
         </span>
 
         {!isProcessing && prompt.trim() && (

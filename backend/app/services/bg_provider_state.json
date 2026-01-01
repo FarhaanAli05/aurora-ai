@@ -1,0 +1,5 @@
+{
+  "preferred_provider": "lcm",
+  "openvino_available": false,
+  "openvino_last_error": "OpenVINO not supported"
+}

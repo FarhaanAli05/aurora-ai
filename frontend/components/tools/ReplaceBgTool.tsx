@@ -12,6 +12,7 @@ interface ReplaceBgToolProps {
   onProcessingStart: () => void
   onProcessingComplete: (result: string) => void
   onProcessingError: (error: Error | string) => void
+  onInfo?: (message: string) => void
   initialBgType?: 'upload' | 'generate'
   disabled?: boolean
 }
@@ -22,6 +23,7 @@ export default function ReplaceBgTool({
   onProcessingStart,
   onProcessingComplete,
   onProcessingError,
+  onInfo,
   initialBgType = 'upload',
   disabled = false,
 }: ReplaceBgToolProps) {
@@ -88,7 +90,6 @@ export default function ReplaceBgTool({
     }
   }
 
-
   if (imageHasTransparency === null) {
     return (
       <div className="card p-4 flex items-center gap-2 text-sm text-[#9ca3af]">
@@ -101,7 +102,7 @@ export default function ReplaceBgTool({
   if (imageHasTransparency === false) {
     return (
       <div className="card p-4">
-        <p className="text-sm text-primary-300 font-medium mb-1">
+        <p className="text-sm text-amber-300 font-medium mb-1">
           Background removal required
         </p>
         <p className="text-xs text-[#9ca3af]">
@@ -110,7 +111,6 @@ export default function ReplaceBgTool({
       </div>
     )
   }
-
 
   return (
     <section className="space-y-6 animate-in">
@@ -231,6 +231,7 @@ export default function ReplaceBgTool({
             onProcessingStart={onProcessingStart}
             onProcessingComplete={onProcessingComplete}
             onProcessingError={onProcessingError}
+            onInfo={onInfo}
             disabled={disabled}
           />
         )}

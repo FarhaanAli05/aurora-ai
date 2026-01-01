@@ -16,6 +16,7 @@ interface MainEditorPanelProps {
   onImageUpload: (image: string) => void
   onError?: (message: string) => void
   onSuccess?: (message: string) => void
+  onInfo?: (message: string) => void
 }
 
 export default function MainEditorPanel({
@@ -24,6 +25,7 @@ export default function MainEditorPanel({
   onImageUpload,
   onError,
   onSuccess,
+  onInfo,
 }: MainEditorPanelProps) {
   const [originalImage, setOriginalImage] = useState<string | null>(null)
   const [currentImage, setCurrentImage] = useState<string | null>(null)
@@ -213,6 +215,7 @@ export default function MainEditorPanel({
           <ReplaceBgTool
             {...commonProps}
             initialBgType={selectedTool === 'generate-bg' ? 'generate' : 'upload'}
+            onInfo={onInfo}
           />
         )
       default:
@@ -240,6 +243,11 @@ export default function MainEditorPanel({
           </span>
           <span className="text-lg font-semibold text-white">
             {getToolName() || 'Choose a tool'}
+          </span>
+        </div>
+        <div className="flex items-center gap-2 text-xs text-white/60">
+          <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">
+            Editor
           </span>
         </div>
       </div>

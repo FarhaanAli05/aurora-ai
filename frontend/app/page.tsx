@@ -63,6 +63,10 @@ export default function Home() {
     addToast(message, 'success')
   }
 
+  const handleInfo = (message: string) => {
+    addToast(message, 'info')
+  }
+
   const removeToast = (id: string) => {
     setToasts((prev) => prev.filter((toast) => toast.id !== id))
   }
@@ -130,6 +134,7 @@ export default function Home() {
                 onImageUpload={handleImageUpload}
                 onError={addToast}
                 onSuccess={handleSuccess}
+                onInfo={handleInfo}
               />
             </div>
           </section>

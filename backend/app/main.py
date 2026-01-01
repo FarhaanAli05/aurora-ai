@@ -1,10 +1,11 @@
 import os
 import base64
+import numpy as np
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 
 from fastapi import FastAPI, File, UploadFile, Form
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 from backend.app.services import inference as aurora_inference
@@ -183,6 +184,65 @@ HTML_FORM = """
 async def index() -> HTMLResponse:
     return HTMLResponse(content=HTML_FORM)
 
+
+@app.get("/api/debug/openvino")
+async def debug_openvino() -> JSONResponse:
+    import platform
+    from pathlib import Path
+    
+    result = {
+        "ok": False,
+        "error": None,
+        "cpu_info": None,
+        "provider": "unknown",
+    }
+    
+    try:
+        cpu = platform.processor() or "unknown"
+        cpuinfo_path = Path("/proc/cpuinfo")
+        if cpuinfo_path.exists():
+            try:
+                contents = cpuinfo_path.read_text(encoding="utf-8", errors="ignore")
+                vendor_line = [line for line in contents.split("\n") if "vendor_id" in line.lower() or "model name" in line.lower()]
+                if vendor_line:
+                    cpu_details = " | ".join(vendor_line[:2])
+                    result["cpu_info"] = f"{cpu} ({cpu_details[:200]})"
+                else:
+                    result["cpu_info"] = cpu
+            except Exception:
+                result["cpu_info"] = cpu
+        else:
+            result["cpu_info"] = cpu
+    except Exception:
+        result["cpu_info"] = "unknown"
+    
+    try:
+        from optimum.intel import OVStableDiffusionPipeline
+    except ImportError as exc:
+        result["error"] = f"ImportError: {exc}"
+        result["provider"] = "lcm"
+        return JSONResponse(content=result)
+    except Exception as exc:
+        result["error"] = f"{type(exc).__name__}: {exc}"
+        result["provider"] = "lcm"
+        return JSONResponse(content=result)
+    
+    try:
+        model_id = "OpenVINO/LCM_Dreamshaper_v7-int8-ov"
+        pipeline = OVStableDiffusionPipeline.from_pretrained(
+            model_id,
+            compile=False,
+            safety_checker=None,
+        )
+        pipeline.compile()
+        result["ok"] = True
+        result["provider"] = "openvino"
+        return JSONResponse(content=result)
+    except Exception as exc:
+        result["error"] = f"{type(exc).__name__}: {exc}"
+        result["provider"] = "lcm"
+        return JSONResponse(content=result)
+
 @app.post("/process")
 async def process_image(
     image: UploadFile = File(...),
@@ -191,6 +251,7 @@ async def process_image(
     bg_type: str = Form("upload"),
     bg_prompt: str = Form(""),
     bg_quality: str = Form("fast"),
+    bg_provider: str = Form("auto"),
 ):
     try:
         project_root = Path(__file__).resolve().parents[1]
@@ -204,6 +265,8 @@ async def process_image(
             in_file.write(contents)
 
         bg_path: Path | None = None
+        provider_notice: str | None = None
+        provider_info: dict | None = None
         if bg_type == "upload" and background is not None:
             bg_contents = await background.read()
             if bg_contents:
@@ -213,13 +276,105 @@ async def process_image(
                     bg_file.write(bg_contents)
         elif bg_type == "generate" and bg_prompt and bg_prompt.strip():
             try:
-                generated_bg = aurora_inference.generate_background(
+                provider_pref = bg_provider.lower() if bg_provider else "auto"
+                if provider_pref not in ("auto", "openvino", "lcm"):
+                    provider_pref = "auto"
+                
+                print(f"Background generation requested with provider preference: {provider_pref}")
+                generated_bg, provider_info_result = aurora_inference.generate_background(
                     prompt=bg_prompt.strip(),
-                    quality=bg_quality
+                    quality=bg_quality,
+                    provider_pref=provider_pref,
                 )
+                provider_info = provider_info_result
+                provider_notice = provider_info.get("message")
                 with NamedTemporaryFile(dir=tmp_dir, suffix=".png", delete=False) as bg_file:
                     bg_path = Path(bg_file.name)
                     generated_bg.save(bg_path, format="PNG")
+                    print(f"Generated background saved to: {bg_path}")
+                
+                with NamedTemporaryFile(dir=tmp_dir, suffix=".png", delete=False) as out_file:
+                    out_path = Path(out_file.name)
+                
+                print(f"Input image path: {in_path}")
+                print(f"Background path: {bg_path}")
+                print(f"Output composite path: {out_path}")
+                
+                from PIL import Image
+                from backend.app.utils.aurora_utils import replace_background
+                
+                input_image = Image.open(in_path)
+                has_alpha = input_image.mode in ('RGBA', 'LA') or 'transparency' in input_image.info
+                
+                if has_alpha:
+                    if input_image.mode != 'RGBA':
+                        input_image = input_image.convert('RGBA')
+                    
+                    alpha_channel = input_image.split()[3]
+                    alpha_array = np.array(alpha_channel)
+                    has_transparency = np.any(alpha_array < 255)
+                    
+                    if has_transparency:
+                        print("Compositing using existing alpha (no background removal)...")
+                        composite = replace_background(input_image, str(bg_path))
+                        composite.save(out_path, format="PNG")
+                        print(f"✓ Saved composite image to: {out_path}")
+                    else:
+                        print("Input has alpha but is fully opaque, using generated background...")
+                        generated_bg = Image.open(bg_path)
+                        generated_bg.save(out_path, format="PNG")
+                        print(f"✓ Saved background image to: {out_path}")
+                else:
+                    print("Input has no transparency, returning generated background only (no ML removal)...")
+                    generated_bg = Image.open(bg_path)
+                    generated_bg.save(out_path, format="PNG")
+                    print(f"✓ Saved background image to: {out_path}")
+                
+                with out_path.open("rb") as f:
+                    image_bytes = f.read()
+                
+                base_name = os.path.splitext(image.filename or "output")[0]
+                out_filename = f"{base_name}_aurora.png"
+                
+                b64_image = base64.b64encode(image_bytes).decode("ascii")
+                data_url = f"data:image/png;base64,{b64_image}"
+                
+                result_html = f"""
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Aurora AI - Result</title>
+  <style>
+    body {{ font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; margin: 2rem; }}
+    .actions {{ margin-bottom: 1rem; display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; }}
+    .btn {{ padding: 0.5rem 1rem; border-radius: 4px; border: none; background: #2563eb; color: white; cursor: pointer; text-decoration: none; }}
+    .btn:hover {{ background: #1d4ed8; }}
+    img {{ max-width: 100%; height: auto; border-radius: 4px; border: 1px solid #e5e7eb; }}
+  </style>
+</head>
+<body>
+  <h1>Aurora AI - Result</h1>
+  <div class="actions">
+    <a class="btn" href="/"">Process another image</a>
+    <a class="btn" href="{data_url}" download="{out_filename}">Download PNG</a>
+  </div>
+  <div>
+    <img src="{data_url}" alt="Processed result" />
+  </div>
+</body>
+</html>
+"""
+                headers = {}
+                if provider_notice:
+                    headers["X-Aurora-Notice"] = provider_notice
+                if provider_info:
+                    headers["X-Aurora-Provider"] = provider_info.get("provider", "unknown")
+                    headers["X-Aurora-Elapsed"] = str(provider_info.get("elapsedSeconds", 0))
+                    headers["X-Aurora-ETA"] = provider_info.get("etaText", "")
+                
+                return HTMLResponse(content=result_html, headers=headers if headers else None)
+                
             except Exception as e:
                 error_html = f"""
 <!DOCTYPE html>
@@ -249,6 +404,11 @@ async def process_image(
 
         with NamedTemporaryFile(dir=tmp_dir, suffix=".png", delete=False) as out_file:
             out_path = Path(out_file.name)
+
+        print(f"Input image path: {in_path}")
+        if bg_path:
+            print(f"Background path: {bg_path}")
+        print(f"Output composite path: {out_path}")
 
         aurora_inference.process_image(
             input_path=str(in_path),
@@ -292,7 +452,14 @@ async def process_image(
 </body>
 </html>
 """
-        return HTMLResponse(content=result_html)
+        headers = {}
+        if provider_notice:
+            headers["X-Aurora-Notice"] = provider_notice
+        if provider_info:
+            headers["X-Aurora-Provider"] = provider_info.get("provider", "unknown")
+            headers["X-Aurora-Elapsed"] = str(provider_info.get("elapsedSeconds", 0))
+            headers["X-Aurora-ETA"] = provider_info.get("etaText", "")
+        return HTMLResponse(content=result_html, headers=headers if headers else None)
 
     except Exception as e:
         error_html = """
