@@ -68,7 +68,7 @@ export default function EmptyUploadState({
 
           <p className="text-sm text-[#9ca3af] max-w-sm mx-auto leading-relaxed mb-6">
             Remove backgrounds, enhance quality, or generate new scenes with
-            Aurora's AI-powered image tools.
+            Aurora&apos;s AI-powered image tools.
           </p>
 
           <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold
