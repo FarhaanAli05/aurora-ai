@@ -35,4 +35,5 @@ third_party/InSPyReNet/
 .DS_Store
 Thumbs.db
 
-node_modules/
+frontend/public/images/tools/generate-bg.webp
+frontend/public/images/tools/generate-bg.jpg
