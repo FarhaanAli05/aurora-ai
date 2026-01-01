@@ -15,7 +15,7 @@ export default function ToolPalette({
   onToolSelect,
 }: ToolPaletteProps) {
   return (
-    <aside className="relative w-80 shrink-0 border-r border-white/10 bg-[#0c1118] flex flex-col overflow-hidden">
+    <aside className="relative w-full md:w-80 shrink-0 border-r border-white/10 bg-[#0c1118] flex flex-col overflow-hidden">
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/5 via-transparent to-transparent" />
       <div className="relative px-6 py-5 border-b border-white/10">
         <div className="flex items-center justify-between">
@@ -27,15 +27,18 @@ export default function ToolPalette({
         </p>
       </div>
 
-      <div className="relative flex-1 overflow-y-auto p-5 space-y-4 bg-[#0c1118]/60 backdrop-blur-xl">
-        {tools.map((tool) => (
-          <ToolCard
-            key={tool.id}
-            tool={tool}
-            isSelected={selectedTool === tool.id}
-            onSelect={() => onToolSelect(tool.id)}
-          />
-        ))}
+      <div className="relative flex-1 overflow-x-auto md:overflow-y-auto p-5 bg-[#0c1118]/60 backdrop-blur-xl">
+        <div className="flex flex-row md:flex-col flex-nowrap md:flex-wrap gap-4 md:gap-4">
+          {tools.map((tool) => (
+            <div key={tool.id} className="flex-none w-[260px] md:w-auto">
+              <ToolCard
+                tool={tool}
+                isSelected={selectedTool === tool.id}
+                onSelect={() => onToolSelect(tool.id)}
+              />
+            </div>
+          ))}
+        </div>
       </div>
     </aside>
   )
