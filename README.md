@@ -79,3 +79,33 @@ npm run dev
 ```
 
 The frontend will be available at `http://localhost:3000`.
+
+## Docker Deployment
+
+### Single Container Deployment
+
+Aurora AI can be deployed as a single Docker container that runs both the frontend and backend services.
+
+**Configuration:**
+- SDK: `docker`
+- App Port: `7860`
+
+**Build and Run:**
+
+```bash
+docker build -t aurora-ai .
+docker run -p 7860:7860 aurora-ai
+```
+
+The application will be available at `http://localhost:7860`.
+
+**Environment Variables:**
+
+- `PORT=7860` - Port for the Next.js frontend (default: 7860)
+- `HF_HOME=/tmp/.huggingface` - Hugging Face cache directory (optional, for free tier)
+
+**Example with custom port:**
+
+```bash
+docker run -p 8080:8080 -e PORT=8080 aurora-ai
+```
