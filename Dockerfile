@@ -19,7 +19,9 @@ RUN npm run build
 WORKDIR /app
 
 COPY backend/requirements.txt ./backend/
-RUN pip3 install --no-cache-dir -r backend/requirements.txt
+RUN python3 -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+RUN pip install --no-cache-dir -r backend/requirements.txt
 
 COPY backend/ ./backend/
 
