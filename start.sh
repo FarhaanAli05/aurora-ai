@@ -6,8 +6,10 @@ cd /app
 uvicorn backend.app.main:app --host 0.0.0.0 --port 8000 &
 BACKEND_PID=$!
 
+sleep 3
+
 cd frontend
-npm start &
+BACKEND_URL=http://localhost:8000 npm start &
 FRONTEND_PID=$!
 
 shutdown() {
