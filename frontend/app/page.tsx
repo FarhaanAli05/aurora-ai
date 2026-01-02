@@ -25,7 +25,7 @@ const TOOLS: Tool[] = [
     id: 'replace-bg',
     title: 'Replace Background',
     description: 'Swap backgrounds with images or AI-generated scenes',
-    thumbnail: '/images/tools/generate-bg.webp',
+    thumbnail: '/images/tools/replace-bg.webp',
     icon: '/icons/backdrop.svg',
   },
   {
