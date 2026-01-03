@@ -180,6 +180,10 @@ HTML_FORM = """
 </html>
 """
 
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy", "timestamp": "2026-01-02"}
+
 @app.get("/", response_class=HTMLResponse)
 async def index() -> HTMLResponse:
     return HTMLResponse(content=HTML_FORM)

@@ -3,13 +3,19 @@ echo "===== Application Startup at $(date) ====="
 
 cd /app
 
+echo "Starting FastAPI backend on port 8000..."
 uvicorn backend.app.main:app --host 0.0.0.0 --port 8000 &
 BACKEND_PID=$!
 
-sleep 3
+echo "Waiting for backend to start..."
+sleep 5
 
+echo "Testing backend connectivity..."
+curl -f http://localhost:8000/health || echo "Backend health check failed"
+
+echo "Starting Next.js frontend on port 7860..."
 cd frontend
-BACKEND_URL=http://localhost:8000 npm start &
+npm start &
 FRONTEND_PID=$!
 
 shutdown() {

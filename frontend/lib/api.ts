@@ -1,4 +1,6 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api'
+const API_BASE_URL = typeof window === 'undefined'
+  ? process.env.BACKEND_URL || 'http://localhost:8000'
+  : (process.env.NEXT_PUBLIC_API_URL || '/api')
 
 export type ProcessingMode =
   | 'remove_background'
