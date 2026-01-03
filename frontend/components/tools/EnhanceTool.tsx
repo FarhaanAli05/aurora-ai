@@ -60,7 +60,7 @@ export default function EnhanceTool({
               <h3 className="text-xl font-semibold tracking-tight">
                 Enhance Image
               </h3>
-              <span className="text-xs text-white/50">~30 sec</span>
+              <span className="text-xs text-white/50">&lt;1 min</span>
             </div>
             <p className="text-sm text-[#9ca3af] leading-relaxed">
               Upscale your image with AI-powered super-resolution. Sharper details,

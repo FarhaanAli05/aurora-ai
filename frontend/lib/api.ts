@@ -1,3 +1,16 @@
+const getApiBaseUrl = (mode: string, options?: ProcessImageOptions) => {
+  if (typeof window === 'undefined') {
+    return process.env.BACKEND_URL || 'http://localhost:8000'
+  }
+  const longRunningModes = ['enhance_2x', 'enhance_4x', 'advanced_2x', 'advanced_4x']
+  const isLongRunning = longRunningModes.includes(mode) || (options?.bgType === 'generate')
+  if (isLongRunning) {
+    return process.env.NEXT_PUBLIC_BACKEND_URL || process.env.BACKEND_URL || 'http://localhost:8000'
+  }
+  
+  return process.env.NEXT_PUBLIC_API_URL || '/api'
+}
+
 const API_BASE_URL = typeof window === 'undefined'
   ? process.env.BACKEND_URL || 'http://localhost:8000'
   : (process.env.NEXT_PUBLIC_API_URL || '/api')
@@ -114,12 +127,18 @@ export async function processImage(
   
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), timeout)
+  
+  const apiBaseUrl = getApiBaseUrl(options.mode, options)
+  const fetchUrl = `${apiBaseUrl}/process`
 
   try {
-    const response = await fetch(`${API_BASE_URL}/process`, {
+    const response = await fetch(fetchUrl, {
       method: 'POST',
       body: formData,
       signal: controller.signal,
+      headers: {
+        'Accept': 'image/png, */*',
+      },
     })
 
     clearTimeout(timeoutId)

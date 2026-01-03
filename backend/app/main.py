@@ -4,8 +4,8 @@ import numpy as np
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 
-from fastapi import FastAPI, File, UploadFile, Form
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi import FastAPI, File, UploadFile, Form, Request
+from fastapi.responses import HTMLResponse, JSONResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 from backend.app.services import inference as aurora_inference
@@ -249,6 +249,7 @@ async def debug_openvino() -> JSONResponse:
 
 @app.post("/process")
 async def process_image(
+    request: Request,
     image: UploadFile = File(...),
     mode: str = Form("remove_background"),
     background: UploadFile | None = File(None),
@@ -340,6 +341,21 @@ async def process_image(
                 base_name = os.path.splitext(image.filename or "output")[0]
                 out_filename = f"{base_name}_aurora.png"
                 
+                accept_header = request.headers.get("accept", "")
+                if "image/png" in accept_header or "image/*" in accept_header or "*/*" in accept_header:
+                    headers = {}
+                    if provider_notice:
+                        headers["X-Aurora-Notice"] = provider_notice
+                    if provider_info:
+                        headers["X-Aurora-Provider"] = provider_info.get("provider", "unknown")
+                        headers["X-Aurora-Elapsed"] = str(provider_info.get("elapsedSeconds", 0))
+                        headers["X-Aurora-ETA"] = provider_info.get("etaText", "")
+                    return Response(
+                        content=image_bytes,
+                        media_type="image/png",
+                        headers=headers if headers else None
+                    )
+                
                 b64_image = base64.b64encode(image_bytes).decode("ascii")
                 data_url = f"data:image/png;base64,{b64_image}"
                 
@@ -426,6 +442,21 @@ async def process_image(
 
         base_name = os.path.splitext(image.filename or "output")[0]
         out_filename = f"{base_name}_aurora.png"
+
+        accept_header = request.headers.get("accept", "")
+        if "image/png" in accept_header or "image/*" in accept_header or "*/*" in accept_header:
+            headers = {}
+            if provider_notice:
+                headers["X-Aurora-Notice"] = provider_notice
+            if provider_info:
+                headers["X-Aurora-Provider"] = provider_info.get("provider", "unknown")
+                headers["X-Aurora-Elapsed"] = str(provider_info.get("elapsedSeconds", 0))
+                headers["X-Aurora-ETA"] = provider_info.get("etaText", "")
+            return Response(
+                content=image_bytes,
+                media_type="image/png",
+                headers=headers if headers else None
+            )
 
         b64_image = base64.b64encode(image_bytes).decode("ascii")
         data_url = f"data:image/png;base64,{b64_image}"

@@ -54,7 +54,7 @@ export default function RemoveBgTool({
               <h3 className="text-xl font-semibold tracking-tight">
                 Remove Background
               </h3>
-              <span className="text-xs text-white/50">&lt;1 min</span>
+              <span className="text-xs text-white/50">~30 sec</span>
             </div>
             <p className="text-sm text-[#9ca3af] leading-relaxed">
               Instantly isolate your subject with pixel-accurate edges. Export a clean transparent PNG ready for design or compositing.
