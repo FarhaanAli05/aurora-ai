@@ -2,13 +2,13 @@ import os
 import base64
 import numpy as np
 from pathlib import Path
-from tempfile import NamedTemporaryFile
 
 from fastapi import FastAPI, File, UploadFile, Form, Request
 from fastapi.responses import HTMLResponse, JSONResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 from backend.app.services import inference as aurora_inference
+from backend.app.utils.temp_paths import make_temp_file, cleanup_paths, temp_dir
 
 app = FastAPI(
     title="Aurora AI",
@@ -258,16 +258,16 @@ async def process_image(
     bg_quality: str = Form("fast"),
     bg_provider: str = Form("lcm"),
 ):
+    temp_files: list[Path] = []
+    
     try:
-        project_root = Path(__file__).resolve().parents[1]
-        tmp_dir = project_root / "tmp"
-        tmp_dir.mkdir(parents=True, exist_ok=True)
-
+        print(f"Temp files created in: {temp_dir()}")
+        
         suffix = os.path.splitext(image.filename or "")[1] or ".png"
-        with NamedTemporaryFile(dir=tmp_dir, suffix=suffix, delete=False) as in_file:
-            in_path = Path(in_file.name)
-            contents = await image.read()
-            in_file.write(contents)
+        in_path = make_temp_file(suffix=suffix)
+        temp_files.append(in_path)
+        contents = await image.read()
+        in_path.write_bytes(contents)
 
         bg_path: Path | None = None
         provider_notice: str | None = None
@@ -276,9 +276,9 @@ async def process_image(
             bg_contents = await background.read()
             if bg_contents:
                 bg_suffix = os.path.splitext(background.filename or "")[1] or ".png"
-                with NamedTemporaryFile(dir=tmp_dir, suffix=bg_suffix, delete=False) as bg_file:
-                    bg_path = Path(bg_file.name)
-                    bg_file.write(bg_contents)
+                bg_path = make_temp_file(suffix=bg_suffix)
+                temp_files.append(bg_path)
+                bg_path.write_bytes(bg_contents)
         elif bg_type == "generate" and bg_prompt and bg_prompt.strip():
             try:
                 provider_pref = bg_provider.lower() if bg_provider else "lcm"
@@ -293,13 +293,14 @@ async def process_image(
                 )
                 provider_info = provider_info_result
                 provider_notice = provider_info.get("message")
-                with NamedTemporaryFile(dir=tmp_dir, suffix=".png", delete=False) as bg_file:
-                    bg_path = Path(bg_file.name)
-                    generated_bg.save(bg_path, format="PNG")
-                    print(f"Generated background saved to: {bg_path}")
                 
-                with NamedTemporaryFile(dir=tmp_dir, suffix=".png", delete=False) as out_file:
-                    out_path = Path(out_file.name)
+                bg_path = make_temp_file(suffix=".png")
+                temp_files.append(bg_path)
+                generated_bg.save(bg_path, format="PNG")
+                print(f"Generated background saved to: {bg_path}")
+                
+                out_path = make_temp_file(suffix=".png")
+                temp_files.append(out_path)
                 
                 print(f"Input image path: {in_path}")
                 print(f"Background path: {bg_path}")
@@ -422,8 +423,8 @@ async def process_image(
 """
                 return HTMLResponse(content=error_html, status_code=400)
 
-        with NamedTemporaryFile(dir=tmp_dir, suffix=".png", delete=False) as out_file:
-            out_path = Path(out_file.name)
+        out_path = make_temp_file(suffix=".png")
+        temp_files.append(out_path)
 
         print(f"Input image path: {in_path}")
         if bg_path:
@@ -522,3 +523,6 @@ async def process_image(
 </html>
 """
         return HTMLResponse(content=error_html, status_code=400)
+    finally:
+        cleanup_paths(*temp_files)
+        print("Temp cleanup OK")

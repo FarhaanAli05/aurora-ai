@@ -172,31 +172,23 @@ def process_image(
     elif mode == "enhance_4x":
         _enhance_only(input_path, output_path, scale=4)
     elif mode == "advanced_2x":
-        import tempfile
-        with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp_file:
-            tmp_path = tmp_file.name
+        from backend.app.utils.temp_paths import make_temp_file, cleanup_paths
         
-        _remove_background_only(input_path, tmp_path, model_path, background_path)
-        
-        _enhance_only(tmp_path, output_path, scale=2)
-        
+        tmp_path = make_temp_file(suffix=".png")
         try:
-            os.unlink(tmp_path)
-        except:
-            pass
+            _remove_background_only(input_path, str(tmp_path), model_path, background_path)
+            _enhance_only(str(tmp_path), output_path, scale=2)
+        finally:
+            cleanup_paths(tmp_path)
     elif mode == "advanced_4x":
-        import tempfile
-        with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp_file:
-            tmp_path = tmp_file.name
+        from backend.app.utils.temp_paths import make_temp_file, cleanup_paths
         
-        _remove_background_only(input_path, tmp_path, model_path, background_path)
-        
-        _enhance_only(tmp_path, output_path, scale=4)
-        
+        tmp_path = make_temp_file(suffix=".png")
         try:
-            os.unlink(tmp_path)
-        except:
-            pass
+            _remove_background_only(input_path, str(tmp_path), model_path, background_path)
+            _enhance_only(str(tmp_path), output_path, scale=4)
+        finally:
+            cleanup_paths(tmp_path)
     else:
         raise ValueError(
             f"Unknown mode: {mode}. Must be 'remove_background', 'enhance_2x', "
