@@ -42,5 +42,4 @@ backend/models/**/*.pth
 backend/models/**/*.safetensors
 backend/tmp/
 **/__pycache__/
-backend/models/
 frontend/public/images/tools/generate-bg.jpg
