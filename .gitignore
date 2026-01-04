@@ -38,3 +38,7 @@ Thumbs.db
 
 frontend/public/images/tools/generate-bg.webp
 frontend/public/images/tools/generate-bg.jpg
+backend/models/**/*.pth
+backend/models/**/*.safetensors
+backend/tmp/
+**/__pycache__/

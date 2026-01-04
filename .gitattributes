@@ -1,8 +1,0 @@
-*.jpg  filter=xet diff=xet merge=xet -text
-*.jpeg filter=xet diff=xet merge=xet -text
-*.png  filter=xet diff=xet merge=xet -text
-*.webp filter=xet diff=xet merge=xet -text
-*.avif filter=xet diff=xet merge=xet -text
-
-*.pth        filter=xet diff=xet merge=xet -text
-*.safetensors filter=xet diff=xet merge=xet -text
