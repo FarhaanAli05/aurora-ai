@@ -14,7 +14,6 @@ WORKDIR /app/frontend
 RUN npm ci
 
 COPY frontend/ .
-ENV NEXT_PUBLIC_API_URL=http://localhost:8000
 RUN npm run build
 
 WORKDIR /app

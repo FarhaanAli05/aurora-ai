@@ -32,7 +32,7 @@ const TOOLS: Tool[] = [
     id: 'generate-bg',
     title: 'Generate Background',
     description: 'Create backgrounds from text prompts using AI',
-    thumbnail: '/images/tools/generate-bg.webp',
+    thumbnail: '/images/tools/generate-bg.jpg',
     icon: '/icons/generate.svg',
     experimental: true,
   },

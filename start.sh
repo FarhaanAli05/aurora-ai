@@ -11,7 +11,7 @@ echo "Waiting for backend to start..."
 sleep 5
 
 echo "Testing backend connectivity..."
-curl -f http://localhost:8000/health || echo "Backend health check failed"
+python3 -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health').read()" && echo "Backend health check passed" || echo "Backend health check failed"
 
 echo "Starting Next.js frontend on port 7860..."
 cd frontend

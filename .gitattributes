@@ -1,4 +1,6 @@
 *.pth filter=xet diff=xet merge=xet -text
 *.pt filter=xet diff=xet merge=xet -text
 *.bin filter=xet diff=xet merge=xet -text
-*.safetensors filter=xet diff=xet merge=xet -text
+*.safetensors filter=xet diff=xet merge=xet -textbackend/models/bg_removal/birefnet/latest.pth filter=lfs diff=lfs merge=lfs -text
+backend/models/upscaling/2xBHI_small_drct-xl/model.pth filter=lfs diff=lfs merge=lfs -text
+frontend/public/images/tools/generate-bg.jpg filter=lfs diff=lfs merge=lfs -text
