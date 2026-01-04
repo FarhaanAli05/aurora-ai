@@ -81,15 +81,11 @@ async function extractErrorMessage(response: Response): Promise<string> {
 
 function getDefaultTimeout(mode: ProcessingMode, bgType?: 'upload' | 'generate'): number {
   if (bgType === 'generate') {
-    return 180000
+    return 600000
   }
   
-  if (mode === 'enhance_4x' || mode === 'advanced_4x') {
-    return 300000
-  }
-  
-  if (mode === 'enhance_2x' || mode === 'advanced_2x') {
-    return 120000
+  if (mode === 'enhance_4x' || mode === 'advanced_4x' || mode === 'enhance_2x' || mode === 'advanced_2x') {
+    return 600000
   }
   
   return 60000
